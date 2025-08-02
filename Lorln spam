@@ -1,0 +1,590 @@
+
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+local playerGui = plr:WaitForChild("PlayerGui")
+
+-- Blacklisted usernames
+local blacklist = {
+    ["A9k_vX"] = true,
+    ["waleedking70"] = true, 
+
+    ["Playe11"]  
+= true,
+}
+
+task.wait(1)
+
+if blacklist[plr.Name] then
+    plr:Kick("🚫 You are banned from using this script")
+    return
+end
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.Name = "LORLN_Spam_UI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+
+-- Configurable settings
+local settings = {
+    prefix = 
+";",
+    commands = {"logs", "clogs", "re", "nv"},
+    repeatCount = 15,
+    minDelay = 0.1,
+    uiSettings = {
+        bgColor = Color3.fromRGB(150, 0, 0), -- Original red color
+        textColor = Color3.fromRGB(255, 100, 100),
+        borderColor = Color3.fromRGB(255, 0, 0),
+        cornerRadius = 10
+    },
+    commandStatus = {
+        ["logs"] = true,
+        ["clogs"] = true,
+        ["re"] = true,
+        ["nv"] = true
+    }
+}
+
+-- Spam variables
+local active = false
+local totalSent = 0
+local looped = 0
+
+-- UI creation function
+local function createUIElement(elementType, parent, properties)
+    local element = Instance.new(elementType)
+    for prop, value in pairs(properties) do
+        element[prop] = value
+    end
+    element.Parent = parent
+    return element
+end
+
+-- Command preparation function
+local function getCommands(name)
+    local result = {}
+    for i = 1, settings.repeatCount do
+        for cmd, enabled in pairs(settings.commandStatus) do
+            if enabled then
+                local fullCmd = settings.prefix..cmd
+                table.insert(result, fullCmd .. " " .. name)
+            end
+        end
+    end
+    return table.concat(result, " ")
+end
+
+-- Update counters
+local function update(sentLabel, loopsLabel)
+    sentLabel.Text = "Sent: " .. totalSent
+    loopsLabel.Text = "Loops: " .. looped
+end
+
+-- Floating circle button
+local circleBtn = createUIElement("TextButton", screenGui, {
+    Size = UDim2.new(0, 80, 0, 80),
+    Position = UDim2.new(0.5, -40, 0.2, -40),
+    BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+    Text = "💥LORLN💥",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.Arcade,
+    TextSize = 18,
+    AutoButtonColor = false,
+    ZIndex = 5,
+    Active = true,
+    Draggable = true
+})
+Instance.new("UICorner", circleBtn).CornerRadius = UDim.new(1, 0)
+
+-- Main frame
+local mainFrame = createUIElement("Frame", screenGui, {
+    Size = UDim2.new(0, 420, 0, 500),
+    Position = UDim2.new(0.5, -210, 0.5, -250),
+    BackgroundColor3 = settings.uiSettings.bgColor,
+    BorderSizePixel = 0,
+    Active = true,
+    Draggable = true,
+    Visible = false
+})
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
+Instance.new("UIStroke", mainFrame).Color = settings.uiSettings.borderColor
+
+-- Title bar
+local titleBar = createUIElement("Frame", mainFrame, {
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+})
+
+local title = createUIElement("TextLabel", titleBar, {
+    Text = "LORLN Spam Pro v1.1 Beta",
+    Size = UDim2.new(1, -100, 1, 0),
+    Position = UDim2.new(0, 10, 0, 0),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+-- Control buttons
+local settingsButton = createUIElement("TextButton", titleBar, {
+    Text = "⚙",
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -105, 0.5, -15),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18
+})
+
+local minimizeButton = createUIElement("TextButton", titleBar, {
+    Text = "-",
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -70, 0.5, -15),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18
+})
+
+local closeButton = createUIElement("TextButton", titleBar, {
+    Text = "✖",
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -35, 0.5, -15),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18
+})
+
+-- Main content
+local mainContent = createUIElement("Frame", mainFrame, {
+    Size = UDim2.new(1, 0, 1, -40),
+    Position = UDim2.new(0, 0, 0, 40),
+    BackgroundTransparency = 1
+})
+
+-- Command settings
+createUIElement("TextLabel", mainContent, {
+    Text = "Target Player",
+    Size = UDim2.new(1, -30, 0, 25),
+    Position = UDim2.new(0, 15, 0, 10),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local targetInput = createUIElement("TextBox", mainContent, {
+    PlaceholderText = "Enter name (e.g., a)",
+    Text = "a",
+    Size = UDim2.new(1, -30, 0, 35),
+    Position = UDim2.new(0, 15, 0, 40),
+    BackgroundColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+Instance.new("UICorner", targetInput).CornerRadius = UDim.new(0, 6)
+
+-- Command preview
+local preview = createUIElement("TextLabel", mainContent, {
+    Text = "",
+    Size = UDim2.new(1, -30, 0, 100),
+    Position = UDim2.new(0, 15, 0, 85),
+    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.Gotham,
+    TextSize = 13,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top
+})
+Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 6)
+
+-- Statistics
+local sentLabel = createUIElement("TextLabel", mainContent, {
+    Text = "Sent: 0",
+    Position = UDim2.new(0, 15, 0, 195),
+    Size = UDim2.new(1, -30, 0, 20),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+
+local loopsLabel = createUIElement("TextLabel", mainContent, {
+    Text = "Loops: 0",
+    Position = UDim2.new(0, 15, 0, 215),
+    Size = UDim2.new(1, -30, 0, 20),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+
+-- Delay settings
+local delayInput = createUIElement("TextBox", mainContent, {
+    PlaceholderText = "Delay (min "..settings.minDelay..")",
+    Text = tostring(settings.minDelay),
+    Size = UDim2.new(1, -30, 0, 35),
+    Position = UDim2.new(0, 15, 0, 245),
+    BackgroundColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+Instance.new("UICorner", delayInput).CornerRadius = UDim.new(0, 6)
+
+-- Toggle button
+local toggle = createUIElement("TextButton", mainContent, {
+    Text = "Start Spam",
+    Size = UDim2.new(1, -30, 0, 40),
+    Position = UDim2.new(0, 15, 0, 290),
+    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 16
+})
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6)
+
+-- Status
+local status = createUIElement("TextLabel", mainContent, {
+    Text = "Status: Idle",
+    Size = UDim2.new(1, -30, 0, 20),
+    Position = UDim2.new(0, 15, 0, 340),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.Gotham,
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Center
+})
+
+-- Settings frame
+local settingsFrame = createUIElement("Frame", screenGui, {
+    Size = UDim2.new(0, 400, 0, 500),
+    Position = UDim2.new(0.5, -200, 0.5, -250),
+    BackgroundColor3 = settings.uiSettings.bgColor,
+    BorderSizePixel = 0,
+    Active = true,
+    Draggable = true,
+    Visible = false
+})
+Instance.new("UICorner", settingsFrame).CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
+Instance.new("UIStroke", settingsFrame).Color = settings.uiSettings.borderColor
+
+-- Settings title bar
+local settingsTitleBar = createUIElement("Frame", settingsFrame, {
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+})
+
+createUIElement("TextLabel", settingsTitleBar, {
+    Text = "Advanced Settings",
+    Size = UDim2.new(1, -70, 1, 0),
+    Position = UDim2.new(0, 10, 0, 0),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local settingsCloseButton = createUIElement("TextButton", settingsTitleBar, {
+    Text = "✖",
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -35, 0.5, -15),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18
+})
+
+-- Settings content
+local settingsContent = createUIElement("Frame", settingsFrame, {
+    Size = UDim2.new(1, 0, 1, -40),
+    Position = UDim2.new(0, 0, 0, 40),
+    BackgroundTransparency = 1
+})
+
+-- Prefix settings
+createUIElement("TextLabel", settingsContent, {
+    Text = "Command Prefix",
+    Size = UDim2.new(1, -30, 0, 25),
+    Position = UDim2.new(0, 15, 0, 10),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local prefixInput = createUIElement("TextBox", settingsContent, {
+    PlaceholderText = "e.g. /",
+    Text = settings.prefix,
+    Size = UDim2.new(0, 50, 0, 35),
+    Position = UDim2.new(0, 15, 0, 40),
+    BackgroundColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+Instance.new("UICorner", prefixInput).CornerRadius = UDim.new(0, 6)
+
+-- Repeat settings
+createUIElement("TextLabel", settingsContent, {
+    Text = "Repeat Count",
+    Size = UDim2.new(1, -30, 0, 25),
+    Position = UDim2.new(0, 80, 0, 40),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local repeatInput = createUIElement("TextBox", settingsContent, {
+    PlaceholderText = "e.g. 15",
+    Text = tostring(settings.repeatCount),
+    Size = UDim2.new(0, 50, 0, 35),
+    Position = UDim2.new(0, 180, 0, 40),
+    BackgroundColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+Instance.new("UICorner", repeatInput).CornerRadius = UDim.new(0, 6)
+
+-- Command toggles
+createUIElement("TextLabel", settingsContent, {
+    Text = "Enabled Commands",
+    Size = UDim2.new(1, -30, 0, 25),
+    Position = UDim2.new(0, 15, 0, 85),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 16,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local commandToggles = {}
+local yOffset = 120
+for cmd, enabled in pairs(settings.commandStatus) do
+    local toggleFrame = createUIElement("Frame", settingsContent, {
+        Size = UDim2.new(1, -30, 0, 30),
+        Position = UDim2.new(0, 15, 0, yOffset),
+        BackgroundTransparency = 1
+    })
+    
+    createUIElement("TextLabel", toggleFrame, {
+        Text = cmd,
+        Size = UDim2.new(0, 100, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = settings.uiSettings.textColor,
+        Font = Enum.Font.Gotham,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local toggleBtn = createUIElement("TextButton", toggleFrame, {
+        Text = enabled and "✓" or "✗",
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(1, -30, 0, 0),
+        BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 16
+    })
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
+    
+    commandToggles[cmd] = toggleBtn
+    yOffset = yOffset + 40
+end
+
+-- UI Settings (Coming Soon)
+createUIElement("TextLabel", settingsContent, {
+    Text = "UI Settings - Coming Soon",
+    Size = UDim2.new(1, -30, 0, 25),
+    Position = UDim2.new(0, 15, 0, yOffset),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 16,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+yOffset = yOffset + 30
+
+createUIElement("TextLabel", settingsContent, {
+    Text = "Color customization features coming in next update",
+    Size = UDim2.new(1, -30, 0, 60),
+    Position = UDim2.new(0, 15, 0, yOffset),
+    BackgroundTransparency = 1,
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.Gotham,
+    TextSize = 14,
+    TextWrapped = true
+})
+yOffset = yOffset + 70
+
+-- Save settings button
+local saveSettingsBtn = createUIElement("TextButton", settingsContent, {
+    Text = "Save Settings",
+    Size = UDim2.new(1, -30, 0, 40),
+    Position = UDim2.new(0, 15, 0, yOffset),
+    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+    TextColor3 = settings.uiSettings.textColor,
+    Font = Enum.Font.GothamBold,
+    TextSize = 16
+})
+Instance.new("UICorner", saveSettingsBtn).CornerRadius = UDim.new(0, 6)
+
+-- Update settings function
+local function updateSettings()
+    settings.prefix = prefixInput.Text or "/"
+    settings.repeatCount = tonumber(repeatInput.Text) or 15
+    if settings.repeatCount < 1 then settings.repeatCount = 1 end
+    
+    -- Update command statuses
+    for cmd, toggle in pairs(commandToggles) do
+        settings.commandStatus[cmd] = toggle.Text == "✓"
+    end
+    
+    preview.Text = getCommands(targetInput.Text)
+end
+
+-- Update UI function
+local function updateUI()
+    -- Update main colors
+    mainFrame.BackgroundColor3 = settings.uiSettings.bgColor
+    mainFrame.UIStroke.Color = settings.uiSettings.borderColor
+    settingsFrame.BackgroundColor3 = settings.uiSettings.bgColor
+    settingsFrame.UIStroke.Color = settings.uiSettings.borderColor
+    
+    -- Update text colors
+    title.TextColor3 = settings.uiSettings.textColor
+    minimizeButton.TextColor3 = settings.uiSettings.textColor
+    closeButton.TextColor3 = settings.uiSettings.textColor
+    settingsButton.TextColor3 = settings.uiSettings.textColor
+    settingsCloseButton.TextColor3 = settings.uiSettings.textColor
+    
+    -- Update corner radius
+    mainFrame.UICorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
+    settingsFrame.UICorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
+end
+
+-- Text to Color3 conversion
+local function textToColor3(text)
+    local r, g, b = text:match("(%d+.?%d*), (%d+.?%d*), (%d+.?%d*)")
+    if r and g and b then
+        return Color3.new(tonumber(r), tonumber(g), tonumber(b))
+    end
+    return settings.uiSettings.bgColor
+end
+
+-- Connect events
+targetInput:GetPropertyChangedSignal("Text"):Connect(updateSettings)
+prefixInput:GetPropertyChangedSignal("Text"):Connect(updateSettings)
+repeatInput:GetPropertyChangedSignal("Text"):Connect(updateSettings)
+
+-- Command toggle events
+for cmd, toggle in pairs(commandToggles) do
+    toggle.MouseButton1Click:Connect(function()
+        toggle.Text = toggle.Text == "✓" and "✗" or "✓"
+        toggle.BackgroundColor3 = toggle.Text == "✓" and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        updateSettings()
+    end)
+end
+
+-- Save settings
+saveSettingsBtn.MouseButton1Click:Connect(function()
+    updateUI()
+    settingsFrame.Visible = false
+end)
+
+-- Toggle spam
+toggle.MouseButton1Click:Connect(function()
+    active = not active
+    toggle.Text = active and "Stop Spam" or "Start Spam"
+    status.Text = active and "Status: Running" or "Status: Idle"
+
+    if active then
+        coroutine.wrap(function()
+            while active do
+                updateSettings()
+                
+                local waitTime = tonumber(delayInput.Text) or settings.minDelay
+                if waitTime < settings.minDelay then waitTime = settings.minDelay end
+
+                local targetName = targetInput.Text
+                if blacklist[targetName] then
+                    status.Text = "Status: Target is blacklisted!"
+                    active = false
+                    toggle.Text = "Start Spam"
+                    break
+                end
+
+                local spamText = getCommands(targetName)
+                game:GetService("Players"):Chat(spamText)
+
+                -- Count commands sent
+                local sentCount = 0
+                for _, enabled in pairs(settings.commandStatus) do
+                    if enabled then sentCount = sentCount + 1 end
+                end
+                totalSent += sentCount * settings.repeatCount
+                looped += 1
+                update(sentLabel, loopsLabel)
+
+                task.wait(waitTime)
+            end
+        end)()
+    end
+end)
+
+-- UI control events
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+settingsButton.MouseButton1Click:Connect(function()
+    settingsFrame.Visible = not settingsFrame.Visible
+end)
+
+settingsCloseButton.MouseButton1Click:Connect(function()
+    settingsFrame.Visible = false
+end)
+
+local minimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    if not minimized then
+        mainContent.Visible = false
+        mainFrame.Size = UDim2.new(0, 420, 0, 40)
+        minimizeButton.Text = "+"
+        minimized = true
+    else
+        mainContent.Visible = true
+        mainFrame.Size = UDim2.new(0, 420, 0, 500)
+        minimizeButton.Text = "-"
+        minimized = false
+    end
+end)
+
+circleBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+    if mainFrame.Visible then
+        mainContent.Visible = true
+        mainFrame.Size = UDim2.new(0, 420, 0, 500)
+        minimizeButton.Text = "L"
+        minimized = false
+    end
+end)
+
+-- Initial setup
+updateSettings()
+updateUI()
+update(sentLabel, loopsLabel)
+
