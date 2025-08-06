@@ -1,15 +1,13 @@
-
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local playerGui = plr:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
 
 -- Blacklisted usernames
 local blacklist = {
     ["A9k_vX"] = true,
-    ["waleedking70"] = true, 
-
-    ["Playe11"]  
-= true,
+    ["waleedking70"] = true,
+    ["Playe11"] = true,
 }
 
 task.wait(1)
@@ -28,16 +26,16 @@ screenGui.IgnoreGuiInset = true
 
 -- Configurable settings
 local settings = {
-    prefix = 
-";",
+    prefix = ";",
     commands = {"logs", "clogs", "re", "nv"},
     repeatCount = 15,
     minDelay = 0.1,
     uiSettings = {
-        bgColor = Color3.fromRGB(150, 0, 0), -- Original red color
-        textColor = Color3.fromRGB(255, 100, 100),
+        bgColor = Color3.fromRGB(10, 10, 10),
+        textColor = Color3.fromRGB(255, 60, 60),
         borderColor = Color3.fromRGB(255, 0, 0),
-        cornerRadius = 10
+        cornerRadius = 12,
+        accentColor = Color3.fromRGB(120, 0, 0)
     },
     commandStatus = {
         ["logs"] = true,
@@ -52,13 +50,24 @@ local active = false
 local totalSent = 0
 local looped = 0
 
--- UI creation function
+-- Animation variables
+local hoverAnimation = false
+
+-- UI creation function with improved design
 local function createUIElement(elementType, parent, properties)
     local element = Instance.new(elementType)
     for prop, value in pairs(properties) do
         element[prop] = value
     end
     element.Parent = parent
+    
+    if element:IsA("TextButton") or element:IsA("TextBox") or element:IsA("Frame") then
+        local stroke = Instance.new("UIStroke", element)
+        stroke.Color = settings.uiSettings.borderColor
+        stroke.Thickness = 1.5
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    end
+    
     return element
 end
 
@@ -82,300 +91,520 @@ local function update(sentLabel, loopsLabel)
     loopsLabel.Text = "Loops: " .. looped
 end
 
--- Floating circle button
+-- Floating circle button with improved design
 local circleBtn = createUIElement("TextButton", screenGui, {
-    Size = UDim2.new(0, 80, 0, 80),
-    Position = UDim2.new(0.5, -40, 0.2, -40),
-    BackgroundColor3 = Color3.fromRGB(255, 0, 0),
-    Text = "💥LORLN💥",
+    Size = UDim2.new(0, 50, 0, 50),
+    Position = UDim2.new(1, -60, 0.5, -25),
+    BackgroundColor3 = settings.uiSettings.accentColor,
+    Text = "💥",
     TextColor3 = Color3.fromRGB(255, 255, 255),
-    Font = Enum.Font.Arcade,
-    TextSize = 18,
+    Font = Enum.Font.GothamBold,
+    TextSize = 20,
     AutoButtonColor = false,
-    ZIndex = 5,
-    Active = true,
-    Draggable = true
+    ZIndex = 10,
+    Active = true
 })
-Instance.new("UICorner", circleBtn).CornerRadius = UDim.new(1, 0)
+local circleCorner = Instance.new("UICorner", circleBtn)
+circleCorner.CornerRadius = UDim.new(1, 0)
 
--- Main frame
+-- Add glow effect
+local circleGlow = Instance.new("ImageLabel", circleBtn)
+circleGlow.Size = UDim2.new(1.5, 0, 1.5, 0)
+circleGlow.Position = UDim2.new(-0.25, 0, -0.25, 0)
+circleGlow.BackgroundTransparency = 1
+circleGlow.Image = "rbxassetid://5028857084"
+circleGlow.ImageColor3 = Color3.fromRGB(255, 50, 50)
+circleGlow.ScaleType = Enum.ScaleType.Slice
+circleGlow.SliceCenter = Rect.new(24, 24, 24, 24)
+circleGlow.ImageTransparency = 0.8
+circleGlow.ZIndex = 9
+
+-- Drag functionality for circle button
+local draggingCircle
+local dragInputCircle
+local dragStartCircle
+local startPosCircle
+
+local function updateCircleInput(input)
+    local delta = input.Position - dragStartCircle
+    circleBtn.Position = UDim2.new(
+        startPosCircle.X.Scale, 
+        startPosCircle.X.Offset + delta.X,
+        startPosCircle.Y.Scale, 
+        startPosCircle.Y.Offset + delta.Y
+    )
+end
+
+circleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingCircle = true
+        dragStartCircle = input.Position
+        startPosCircle = circleBtn.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingCircle = false
+            end
+        end)
+    end
+end)
+
+circleBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInputCircle = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInputCircle and draggingCircle then
+        updateCircleInput(input)
+    end
+end)
+
+-- Keep the button within screen bounds
+local function ensureCircleInBounds()
+    local absPos = circleBtn.AbsolutePosition
+    local absSize = circleBtn.AbsoluteSize
+    local viewportSize = workspace.CurrentCamera.ViewportSize
+    
+    local newX = math.clamp(absPos.X, 0, viewportSize.X - absSize.X)
+    local newY = math.clamp(absPos.Y, 0, viewportSize.Y - absSize.Y)
+    
+    circleBtn.Position = UDim2.new(0, newX, 0, newY)
+end
+
+-- Hover effect for circle button
+circleBtn.MouseEnter:Connect(function()
+    hoverAnimation = true
+    TweenService:Create(
+        circleBtn,
+        TweenInfo.new(0.2),
+        {Size = UDim2.new(0, 60, 0, 60), Position = UDim2.new(1, -65, 0.5, -30)}
+    ):Play()
+    TweenService:Create(
+        circleGlow,
+        TweenInfo.new(0.2),
+        {ImageColor3 = Color3.fromRGB(255, 80, 80)}
+    ):Play()
+end)
+
+circleBtn.MouseLeave:Connect(function()
+    hoverAnimation = false
+    TweenService:Create(
+        circleBtn,
+        TweenInfo.new(0.2),
+        {Size = UDim2.new(0, 50, 0, 50), Position = UDim2.new(1, -60, 0.5, -25)}
+    ):Play()
+    TweenService:Create(
+        circleGlow,
+        TweenInfo.new(0.2),
+        {ImageColor3 = Color3.fromRGB(255, 50, 50)}
+    ):Play()
+end)
+
+-- Smaller main frame with improved design
 local mainFrame = createUIElement("Frame", screenGui, {
-    Size = UDim2.new(0, 420, 0, 500),
-    Position = UDim2.new(0.5, -210, 0.5, -250),
+    Size = UDim2.new(0, 350, 0, 400),
+    Position = UDim2.new(0.5, -175, 0.5, -200),
     BackgroundColor3 = settings.uiSettings.bgColor,
     BorderSizePixel = 0,
     Active = true,
     Draggable = true,
-    Visible = false
+    Visible = false,
+    ClipsDescendants = true
 })
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
-Instance.new("UIStroke", mainFrame).Color = settings.uiSettings.borderColor
+local mainCorner = Instance.new("UICorner", mainFrame)
+mainCorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
 
--- Title bar
+-- Drag functionality for main frame
+local draggingMain
+local dragInputMain
+local dragStartMain
+local startPosMain
+
+local function updateMainInput(input)
+    local delta = input.Position - dragStartMain
+    mainFrame.Position = UDim2.new(
+        startPosMain.X.Scale,
+        startPosMain.X.Offset + delta.X,
+        startPosMain.Y.Scale,
+        startPosMain.Y.Offset + delta.Y
+    )
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingMain = true
+        dragStartMain = input.Position
+        startPosMain = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingMain = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInputMain = input
+    end
+end)
+
+-- Title bar with gradient
 local titleBar = createUIElement("Frame", mainFrame, {
-    Size = UDim2.new(1, 0, 0, 40),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Size = UDim2.new(1, 0, 0, 35),
+    BackgroundColor3 = settings.uiSettings.accentColor
 })
+
+-- Gradient effect
+local gradient = Instance.new("UIGradient", titleBar)
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 0, 0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 0))
+})
+gradient.Rotation = 90
 
 local title = createUIElement("TextLabel", titleBar, {
-    Text = "LORLN Spam Pro v1.1 Beta",
+    Text = "LORLN SPAM",
     Size = UDim2.new(1, -100, 1, 0),
     Position = UDim2.new(0, 10, 0, 0),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 18,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBlack,
+    TextSize = 16,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 -- Control buttons
 local settingsButton = createUIElement("TextButton", titleBar, {
     Text = "⚙",
-    Size = UDim2.new(0, 30, 0, 30),
-    Position = UDim2.new(1, -105, 0.5, -15),
+    Size = UDim2.new(0, 25, 0, 25),
+    Position = UDim2.new(1, -80, 0.5, -12.5),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.GothamBold,
-    TextSize = 18
+    TextSize = 16
 })
 
 local minimizeButton = createUIElement("TextButton", titleBar, {
     Text = "-",
-    Size = UDim2.new(0, 30, 0, 30),
-    Position = UDim2.new(1, -70, 0.5, -15),
+    Size = UDim2.new(0, 25, 0, 25),
+    Position = UDim2.new(1, -50, 0.5, -12.5),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.GothamBold,
     TextSize = 18
 })
 
 local closeButton = createUIElement("TextButton", titleBar, {
-    Text = "✖",
-    Size = UDim2.new(0, 30, 0, 30),
-    Position = UDim2.new(1, -35, 0.5, -15),
+    Text = "✕",
+    Size = UDim2.new(0, 25, 0, 25),
+    Position = UDim2.new(1, -20, 0.5, -12.5),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(255, 100, 100),
     Font = Enum.Font.GothamBold,
-    TextSize = 18
+    TextSize = 16
 })
 
 -- Main content
 local mainContent = createUIElement("Frame", mainFrame, {
-    Size = UDim2.new(1, 0, 1, -40),
-    Position = UDim2.new(0, 0, 0, 40),
+    Size = UDim2.new(1, 0, 1, -35),
+    Position = UDim2.new(0, 0, 0, 35),
     BackgroundTransparency = 1
 })
 
 -- Command settings
 createUIElement("TextLabel", mainContent, {
-    Text = "Target Player",
-    Size = UDim2.new(1, -30, 0, 25),
-    Position = UDim2.new(0, 15, 0, 10),
+    Text = "TARGET PLAYER:",
+    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.new(0, 10, 0, 10),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 13,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 local targetInput = createUIElement("TextBox", mainContent, {
-    PlaceholderText = "Enter name (e.g., a)",
+    PlaceholderText = "username",
     Text = "a",
-    Size = UDim2.new(1, -30, 0, 35),
-    Position = UDim2.new(0, 15, 0, 40),
-    BackgroundColor3 = settings.uiSettings.textColor,
-    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Size = UDim2.new(1, -20, 0, 30),
+    Position = UDim2.new(0, 10, 0, 35),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 14,
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 })
-Instance.new("UICorner", targetInput).CornerRadius = UDim.new(0, 6)
+local targetCorner = Instance.new("UICorner", targetInput)
+targetCorner.CornerRadius = UDim.new(0, 6)
 
 -- Command preview
 local preview = createUIElement("TextLabel", mainContent, {
     Text = "",
-    Size = UDim2.new(1, -30, 0, 100),
-    Position = UDim2.new(0, 15, 0, 85),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+    Size = UDim2.new(1, -20, 0, 80),
+    Position = UDim2.new(0, 10, 0, 75),
+    BackgroundColor3 = Color3.fromRGB(20, 20, 20),
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.Gotham,
-    TextSize = 13,
+    TextSize = 12,
     TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Top
 })
-Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 6)
+local previewCorner = Instance.new("UICorner", preview)
+previewCorner.CornerRadius = UDim.new(0, 8)
 
 -- Statistics
 local sentLabel = createUIElement("TextLabel", mainContent, {
     Text = "Sent: 0",
-    Position = UDim2.new(0, 15, 0, 195),
-    Size = UDim2.new(1, -30, 0, 20),
+    Position = UDim2.new(0, 10, 0, 165),
+    Size = UDim2.new(0.5, -15, 0, 20),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 13
 })
 
 local loopsLabel = createUIElement("TextLabel", mainContent, {
     Text = "Loops: 0",
-    Position = UDim2.new(0, 15, 0, 215),
-    Size = UDim2.new(1, -30, 0, 20),
+    Position = UDim2.new(0.5, 5, 0, 165),
+    Size = UDim2.new(0.5, -15, 0, 20),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 13
 })
 
 -- Delay settings
 local delayInput = createUIElement("TextBox", mainContent, {
-    PlaceholderText = "Delay (min "..settings.minDelay..")",
+    PlaceholderText = "delay: "..settings.minDelay,
     Text = tostring(settings.minDelay),
-    Size = UDim2.new(1, -30, 0, 35),
-    Position = UDim2.new(0, 15, 0, 245),
-    BackgroundColor3 = settings.uiSettings.textColor,
-    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Size = UDim2.new(1, -20, 0, 30),
+    Position = UDim2.new(0, 10, 0, 195),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 14,
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 })
-Instance.new("UICorner", delayInput).CornerRadius = UDim.new(0, 6)
+local delayCorner = Instance.new("UICorner", delayInput)
+delayCorner.CornerRadius = UDim.new(0, 6)
 
--- Toggle button
+-- Toggle button with improved design
 local toggle = createUIElement("TextButton", mainContent, {
-    Text = "Start Spam",
-    Size = UDim2.new(1, -30, 0, 40),
-    Position = UDim2.new(0, 15, 0, 290),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 16
+    Text = "START SPAM",
+    Size = UDim2.new(1, -20, 0, 35),
+    Position = UDim2.new(0, 10, 0, 235),
+    BackgroundColor3 = settings.uiSettings.accentColor,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBlack,
+    TextSize = 16,
+    AutoButtonColor = false
 })
-Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6)
+local toggleCorner = Instance.new("UICorner", toggle)
+toggleCorner.CornerRadius = UDim.new(0, 8)
+
+-- Add hover effect to toggle button
+toggle.MouseEnter:Connect(function()
+    TweenService:Create(
+        toggle,
+        TweenInfo.new(0.2),
+        {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}
+    ):Play()
+end)
+
+toggle.MouseLeave:Connect(function()
+    TweenService:Create(
+        toggle,
+        TweenInfo.new(0.2),
+        {BackgroundColor3 = settings.uiSettings.accentColor}
+    ):Play()
+end)
 
 -- Status
 local status = createUIElement("TextLabel", mainContent, {
-    Text = "Status: Idle",
-    Size = UDim2.new(1, -30, 0, 20),
-    Position = UDim2.new(0, 15, 0, 340),
+    Text = "Status: Ready",
+    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.new(0, 10, 0, 280),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.Gotham,
-    TextSize = 14,
+    TextSize = 13,
     TextXAlignment = Enum.TextXAlignment.Center
 })
 
 -- Settings frame
 local settingsFrame = createUIElement("Frame", screenGui, {
-    Size = UDim2.new(0, 400, 0, 500),
-    Position = UDim2.new(0.5, -200, 0.5, -250),
+    Size = UDim2.new(0, 320, 0, 400),
+    Position = UDim2.new(0.5, -160, 0.5, -200),
     BackgroundColor3 = settings.uiSettings.bgColor,
     BorderSizePixel = 0,
     Active = true,
     Draggable = true,
-    Visible = false
+    Visible = false,
+    ClipsDescendants = true
 })
-Instance.new("UICorner", settingsFrame).CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
-Instance.new("UIStroke", settingsFrame).Color = settings.uiSettings.borderColor
+local settingsCorner = Instance.new("UICorner", settingsFrame)
+settingsCorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
+
+-- Drag functionality for settings frame
+local draggingSettings
+local dragInputSettings
+local dragStartSettings
+local startPosSettings
+
+local function updateSettingsInput(input)
+    local delta = input.Position - dragStartSettings
+    settingsFrame.Position = UDim2.new(
+        startPosSettings.X.Scale,
+        startPosSettings.X.Offset + delta.X,
+        startPosSettings.Y.Scale,
+        startPosSettings.Y.Offset + delta.Y
+    )
+end
+
+settingsFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSettings = true
+        dragStartSettings = input.Position
+        startPosSettings = settingsFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingSettings = false
+            end
+        end)
+    end
+end)
+
+settingsFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInputSettings = input
+    end
+end)
 
 -- Settings title bar
 local settingsTitleBar = createUIElement("Frame", settingsFrame, {
-    Size = UDim2.new(1, 0, 0, 40),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Size = UDim2.new(1, 0, 0, 35),
+    BackgroundColor3 = settings.uiSettings.accentColor
 })
 
+-- Gradient for settings title
+local settingsGradient = Instance.new("UIGradient", settingsTitleBar)
+settingsGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 0, 0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 0))
+})
+settingsGradient.Rotation = 90
+
 createUIElement("TextLabel", settingsTitleBar, {
-    Text = "Advanced Settings",
+    Text = "SETTINGS",
     Size = UDim2.new(1, -70, 1, 0),
     Position = UDim2.new(0, 10, 0, 0),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 18,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBlack,
+    TextSize = 16,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 local settingsCloseButton = createUIElement("TextButton", settingsTitleBar, {
-    Text = "✖",
-    Size = UDim2.new(0, 30, 0, 30),
-    Position = UDim2.new(1, -35, 0.5, -15),
+    Text = "✕",
+    Size = UDim2.new(0, 25, 0, 25),
+    Position = UDim2.new(1, -20, 0.5, -12.5),
     BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
+    TextColor3 = Color3.fromRGB(255, 100, 100),
     Font = Enum.Font.GothamBold,
-    TextSize = 18
+    TextSize = 16
 })
 
--- Settings content
-local settingsContent = createUIElement("Frame", settingsFrame, {
-    Size = UDim2.new(1, 0, 1, -40),
-    Position = UDim2.new(0, 0, 0, 40),
+-- Settings content with scrolling
+local settingsScrolling = createUIElement("ScrollingFrame", settingsFrame, {
+    Size = UDim2.new(1, 0, 1, -35),
+    Position = UDim2.new(0, 0, 0, 35),
+    BackgroundTransparency = 1,
+    ScrollBarThickness = 5,
+    CanvasSize = UDim2.new(0, 0, 0, 600)
+})
+
+local settingsContent = createUIElement("Frame", settingsScrolling, {
+    Size = UDim2.new(1, 0, 1, 0),
     BackgroundTransparency = 1
 })
 
 -- Prefix settings
 createUIElement("TextLabel", settingsContent, {
-    Text = "Command Prefix",
-    Size = UDim2.new(1, -30, 0, 25),
-    Position = UDim2.new(0, 15, 0, 10),
+    Text = "COMMAND PREFIX:",
+    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.new(0, 10, 0, 10),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 13,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 local prefixInput = createUIElement("TextBox", settingsContent, {
-    PlaceholderText = "e.g. /",
+    PlaceholderText = "e.g. ;",
     Text = settings.prefix,
-    Size = UDim2.new(0, 50, 0, 35),
-    Position = UDim2.new(0, 15, 0, 40),
-    BackgroundColor3 = settings.uiSettings.textColor,
-    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Size = UDim2.new(0, 40, 0, 30),
+    Position = UDim2.new(0, 10, 0, 35),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 14,
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 })
-Instance.new("UICorner", prefixInput).CornerRadius = UDim.new(0, 6)
+local prefixCorner = Instance.new("UICorner", prefixInput)
+prefixCorner.CornerRadius = UDim.new(0, 6)
 
 -- Repeat settings
 createUIElement("TextLabel", settingsContent, {
-    Text = "Repeat Count",
-    Size = UDim2.new(1, -30, 0, 25),
-    Position = UDim2.new(0, 80, 0, 40),
+    Text = "REPEAT COUNT:",
+    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.new(0, 10, 0, 75),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 13,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 local repeatInput = createUIElement("TextBox", settingsContent, {
     PlaceholderText = "e.g. 15",
     Text = tostring(settings.repeatCount),
-    Size = UDim2.new(0, 50, 0, 35),
-    Position = UDim2.new(0, 180, 0, 40),
-    BackgroundColor3 = settings.uiSettings.textColor,
-    TextColor3 = Color3.fromRGB(0, 0, 0),
+    Size = UDim2.new(0, 40, 0, 30),
+    Position = UDim2.new(0, 10, 0, 100),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+    TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.Gotham,
-    TextSize = 14
+    TextSize = 14,
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 })
-Instance.new("UICorner", repeatInput).CornerRadius = UDim.new(0, 6)
+local repeatCorner = Instance.new("UICorner", repeatInput)
+repeatCorner.CornerRadius = UDim.new(0, 6)
 
 -- Command toggles
 createUIElement("TextLabel", settingsContent, {
-    Text = "Enabled Commands",
-    Size = UDim2.new(1, -30, 0, 25),
-    Position = UDim2.new(0, 15, 0, 85),
+    Text = "ENABLED COMMANDS:",
+    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.new(0, 10, 0, 140),
     BackgroundTransparency = 1,
     TextColor3 = settings.uiSettings.textColor,
     Font = Enum.Font.GothamBold,
-    TextSize = 16,
+    TextSize = 14,
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 local commandToggles = {}
-local yOffset = 120
+local yOffset = 170
 for cmd, enabled in pairs(settings.commandStatus) do
     local toggleFrame = createUIElement("Frame", settingsContent, {
-        Size = UDim2.new(1, -30, 0, 30),
-        Position = UDim2.new(0, 15, 0, yOffset),
+        Size = UDim2.new(1, -20, 0, 30),
+        Position = UDim2.new(0, 10, 0, yOffset),
         BackgroundTransparency = 1
     })
     
@@ -386,103 +615,100 @@ for cmd, enabled in pairs(settings.commandStatus) do
         BackgroundTransparency = 1,
         TextColor3 = settings.uiSettings.textColor,
         Font = Enum.Font.Gotham,
-        TextSize = 14,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left
     })
     
     local toggleBtn = createUIElement("TextButton", toggleFrame, {
-        Text = enabled and "✓" or "✗",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -30, 0, 0),
-        BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0),
+        Text = enabled and "ON" or "OFF",
+        Size = UDim2.new(0, 50, 0, 25),
+        Position = UDim2.new(1, -50, 0, 2.5),
+        BackgroundColor3 = enabled and settings.uiSettings.accentColor or Color3.fromRGB(40, 40, 40),
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
-        TextSize = 16
+        TextSize = 12,
+        AutoButtonColor = false
     })
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
+    local toggleBtnCorner = Instance.new("UICorner", toggleBtn)
+    toggleBtnCorner.CornerRadius = UDim.new(0, 6)
+    
+    toggleBtn.MouseEnter:Connect(function()
+        if toggleBtn.Text == "ON" then
+            TweenService:Create(
+                toggleBtn,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}
+            ):Play()
+        else
+            TweenService:Create(
+                toggleBtn,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}
+            ):Play()
+        end
+    end)
+    
+    toggleBtn.MouseLeave:Connect(function()
+        if toggleBtn.Text == "ON" then
+            TweenService:Create(
+                toggleBtn,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = settings.uiSettings.accentColor}
+            ):Play()
+        else
+            TweenService:Create(
+                toggleBtn,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}
+            ):Play()
+        end
+    end)
     
     commandToggles[cmd] = toggleBtn
-    yOffset = yOffset + 40
+    yOffset = yOffset + 35
 end
-
--- UI Settings (Coming Soon)
-createUIElement("TextLabel", settingsContent, {
-    Text = "UI Settings - Coming Soon",
-    Size = UDim2.new(1, -30, 0, 25),
-    Position = UDim2.new(0, 15, 0, yOffset),
-    BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 16,
-    TextXAlignment = Enum.TextXAlignment.Left
-})
-yOffset = yOffset + 30
-
-createUIElement("TextLabel", settingsContent, {
-    Text = "Color customization features coming in next update",
-    Size = UDim2.new(1, -30, 0, 60),
-    Position = UDim2.new(0, 15, 0, yOffset),
-    BackgroundTransparency = 1,
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.Gotham,
-    TextSize = 14,
-    TextWrapped = true
-})
-yOffset = yOffset + 70
 
 -- Save settings button
 local saveSettingsBtn = createUIElement("TextButton", settingsContent, {
-    Text = "Save Settings",
-    Size = UDim2.new(1, -30, 0, 40),
-    Position = UDim2.new(0, 15, 0, yOffset),
-    BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-    TextColor3 = settings.uiSettings.textColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 16
+    Text = "SAVE SETTINGS",
+    Size = UDim2.new(1, -20, 0, 35),
+    Position = UDim2.new(0, 10, 0, yOffset + 10),
+    BackgroundColor3 = settings.uiSettings.accentColor,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBlack,
+    TextSize = 16,
+    AutoButtonColor = false
 })
-Instance.new("UICorner", saveSettingsBtn).CornerRadius = UDim.new(0, 6)
+local saveCorner = Instance.new("UICorner", saveSettingsBtn)
+saveCorner.CornerRadius = UDim.new(0, 8)
+
+saveSettingsBtn.MouseEnter:Connect(function()
+    TweenService:Create(
+        saveSettingsBtn,
+        TweenInfo.new(0.2),
+        {BackgroundColor3 = Color3.fromRGB(150, 0, 0)}
+    ):Play()
+end)
+
+saveSettingsBtn.MouseLeave:Connect(function()
+    TweenService:Create(
+        saveSettingsBtn,
+        TweenInfo.new(0.2),
+        {BackgroundColor3 = settings.uiSettings.accentColor}
+    ):Play()
+end)
 
 -- Update settings function
 local function updateSettings()
-    settings.prefix = prefixInput.Text or "/"
+    settings.prefix = prefixInput.Text or ";"
     settings.repeatCount = tonumber(repeatInput.Text) or 15
     if settings.repeatCount < 1 then settings.repeatCount = 1 end
     
-    -- Update command statuses
     for cmd, toggle in pairs(commandToggles) do
-        settings.commandStatus[cmd] = toggle.Text == "✓"
+        settings.commandStatus[cmd] = toggle.Text == "ON"
     end
     
     preview.Text = getCommands(targetInput.Text)
-end
-
--- Update UI function
-local function updateUI()
-    -- Update main colors
-    mainFrame.BackgroundColor3 = settings.uiSettings.bgColor
-    mainFrame.UIStroke.Color = settings.uiSettings.borderColor
-    settingsFrame.BackgroundColor3 = settings.uiSettings.bgColor
-    settingsFrame.UIStroke.Color = settings.uiSettings.borderColor
-    
-    -- Update text colors
-    title.TextColor3 = settings.uiSettings.textColor
-    minimizeButton.TextColor3 = settings.uiSettings.textColor
-    closeButton.TextColor3 = settings.uiSettings.textColor
-    settingsButton.TextColor3 = settings.uiSettings.textColor
-    settingsCloseButton.TextColor3 = settings.uiSettings.textColor
-    
-    -- Update corner radius
-    mainFrame.UICorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
-    settingsFrame.UICorner.CornerRadius = UDim.new(0, settings.uiSettings.cornerRadius)
-end
-
--- Text to Color3 conversion
-local function textToColor3(text)
-    local r, g, b = text:match("(%d+.?%d*), (%d+.?%d*), (%d+.?%d*)")
-    if r and g and b then
-        return Color3.new(tonumber(r), tonumber(g), tonumber(b))
-    end
-    return settings.uiSettings.bgColor
 end
 
 -- Connect events
@@ -493,23 +719,22 @@ repeatInput:GetPropertyChangedSignal("Text"):Connect(updateSettings)
 -- Command toggle events
 for cmd, toggle in pairs(commandToggles) do
     toggle.MouseButton1Click:Connect(function()
-        toggle.Text = toggle.Text == "✓" and "✗" or "✓"
-        toggle.BackgroundColor3 = toggle.Text == "✓" and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        toggle.Text = toggle.Text == "ON" and "OFF" or "ON"
         updateSettings()
     end)
 end
 
 -- Save settings
 saveSettingsBtn.MouseButton1Click:Connect(function()
-    updateUI()
     settingsFrame.Visible = false
+    mainFrame.Visible = true
 end)
 
 -- Toggle spam
 toggle.MouseButton1Click:Connect(function()
     active = not active
-    toggle.Text = active and "Stop Spam" or "Start Spam"
-    status.Text = active and "Status: Running" or "Status: Idle"
+    toggle.Text = active and "STOP SPAM" or "START SPAM"
+    status.Text = active and "Status: Running..." or "Status: Ready"
 
     if active then
         coroutine.wrap(function()
@@ -521,16 +746,15 @@ toggle.MouseButton1Click:Connect(function()
 
                 local targetName = targetInput.Text
                 if blacklist[targetName] then
-                    status.Text = "Status: Target is blacklisted!"
+                    status.Text = "Status: Target blacklisted!"
                     active = false
-                    toggle.Text = "Start Spam"
+                    toggle.Text = "START SPAM"
                     break
                 end
 
                 local spamText = getCommands(targetName)
                 game:GetService("Players"):Chat(spamText)
 
-                -- Count commands sent
                 local sentCount = 0
                 for _, enabled in pairs(settings.commandStatus) do
                     if enabled then sentCount = sentCount + 1 end
@@ -552,39 +776,55 @@ end)
 
 settingsButton.MouseButton1Click:Connect(function()
     settingsFrame.Visible = not settingsFrame.Visible
+    mainFrame.Visible = not settingsFrame.Visible
 end)
 
 settingsCloseButton.MouseButton1Click:Connect(function()
     settingsFrame.Visible = false
+    mainFrame.Visible = true
 end)
 
 local minimized = false
 minimizeButton.MouseButton1Click:Connect(function()
     if not minimized then
         mainContent.Visible = false
-        mainFrame.Size = UDim2.new(0, 420, 0, 40)
+        mainFrame.Size = UDim2.new(0, 350, 0, 35)
         minimizeButton.Text = "+"
         minimized = true
     else
         mainContent.Visible = true
-        mainFrame.Size = UDim2.new(0, 420, 0, 500)
+        mainFrame.Size = UDim2.new(0, 350, 0, 400)
         minimizeButton.Text = "-"
         minimized = false
     end
 end)
 
+-- Toggle main frame visibility with drag functionality
 circleBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
     if mainFrame.Visible then
         mainContent.Visible = true
-        mainFrame.Size = UDim2.new(0, 420, 0, 500)
-        minimizeButton.Text = "L"
+        mainFrame.Size = UDim2.new(0, 350, 0, 400)
+        minimizeButton.Text = "-"
         minimized = false
     end
 end)
 
 -- Initial setup
 updateSettings()
-updateUI()
 update(sentLabel, loopsLabel)
 
+-- Ensure all draggable elements stay in bounds
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if draggingMain then
+            updateMainInput(input)
+            ensureCircleInBounds()
+        elseif draggingSettings then
+            updateSettingsInput(input)
+        elseif draggingCircle then
+            updateCircleInput(input)
+            ensureCircleInBounds()
+        end
+    end
+end)
