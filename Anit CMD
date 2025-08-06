@@ -1,48 +1,49 @@
--- ✅ مضاد تنفيذات خطيرة + حذف أدوات التخريب بدون تعليق
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LP = Players.LocalPlayer
-if not RunService:IsClient() then return end
+local LocalPlayer = Players.LocalPlayer
 
-local blockList = {
-    "log", "logs", "clogs", "nv", "re", "uncmdbar2", "mute",
-    "res", "kill", "fling", "giant", "size", "copy", "anticheat"
-}
+-- وظيفة الثغرة للملف 
+local function DeleteHDAdminHDClient()
+    local targetName = "HDAdminHDClient"
+    local found = false
+    
+    -- البحث في Workspace
+    local foundInWorkspace = game.Workspace:FindFirstChild(targetName, true)
+    if foundInWorkspace then
+        foundInWorkspace:Destroy()
+        print("تم  من Workspace: "..targetName)
+        found = true
+    end
+    
+    -- البحث في ReplicatedStorage
+    local foundInReplicated = game.ReplicatedStorage:FindFirstChild(targetName, true)
+    if foundInReplicated then
+        foundInReplicated:Destroy()
+        print("تم  من ReplicatedStorage: "..targetName)
+        found = true
+    end
+    
+    -- البحث في ServerStorage
+    local foundInServer = game.ServerStorage:FindFirstChild(targetName, true)
+    if foundInServer then
+        foundInServer:Destroy()
+        print("تم  ServerStorage: "..targetName)
+        found = true
+    end
+    
+    if not found then
+        warn("لم يتم العثور : "..targetName)
+    end
+end
 
--- تأخير الفحص حتى ما يسبب تعليق
-task.delay(2.5, function()
-    pcall(function()
-        for _, func in pairs(getgc(true)) do
-            if typeof(func) == "function" and islclosure(func) and not isexecutorclosure(func) then
-                local env = getfenv(func)
-                if env and env.script then
-                    local name = tostring(env.script):lower()
-                    for _, word in pairs(blockList) do
-                        if name:find(word) and not name:find("chat") then
-                            hookfunction(func, function() return nil end)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end)
+-- اعدادات
+DeleteHDAdminHDClient()
 
--- حذف أي جسم أو سكربت ميوت أو تخريب من جسم اللاعب
-task.spawn(function()
-    while true do
-        pcall(function()
-            local char = LP.Character or LP.CharacterAdded:Wait()
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BodyMover") or part:IsA("BodyVelocity") or part:IsA("BodyGyro")
-                or part:IsA("AlignPosition") or part:IsA("AlignOrientation")
-                or part.Name:lower():match("mute") then
-                    part:Destroy()
-                end
-            end
-        end)
-        task.wait(2)
+-- أوامر الشات
+LocalPlayer.Chatted:Connect(function(message)
+    if message == "/حذف" then
+        DeleteHDAdminHDClient()
     end
 end)
+
+print("جاهز")
