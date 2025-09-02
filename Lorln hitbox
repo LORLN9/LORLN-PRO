@@ -1,0 +1,980 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- إنشاء واجهة الشعار
+local LogoGui = Instance.new("ScreenGui")
+LogoGui.Name = "LOR_PlayerLogo"
+LogoGui.Parent = game.CoreGui
+LogoGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+LogoGui.DisplayOrder = 1000
+
+-- وظيفة لعرض شعار دخول اللاعب
+local function showPlayerLogo(playerName)
+    local logoFrame = Instance.new("Frame")
+    logoFrame.Size = UDim2.new(0, 300, 0, 80)
+    logoFrame.Position = UDim2.new(0.5, -150, 0.3, 0)
+    logoFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    logoFrame.BackgroundTransparency = 0.2
+    logoFrame.Parent = LogoGui
+    
+    -- تأثيرات الإطار
+    local frameCorner = Instance.new("UICorner")
+    frameCorner.CornerRadius = UDim.new(0, 12)
+    frameCorner.Parent = logoFrame
+    
+    local frameStroke = Instance.new("UIStroke")
+    frameStroke.Color = Color3.fromRGB(60, 120, 200)
+    frameStroke.Thickness = 2
+    frameStroke.Parent = logoFrame
+    
+    -- شعار LOR
+    local logoText = Instance.new("TextLabel")
+    logoText.Size = UDim2.new(1, 0, 0.5, 0)
+    logoText.Position = UDim2.new(0, 0, 0, 0)
+    logoText.Text = "LOR - LORLN"
+    logoText.TextColor3 = Color3.fromRGB(220, 220, 230)
+    logoText.BackgroundTransparency = 1
+    logoText.Font = Enum.Font.GothamBold
+    logoText.TextSize = 20
+    logoText.Parent = logoFrame
+    
+    -- اسم اللاعب
+    local playerText = Instance.new("TextLabel")
+    playerText.Size = UDim2.new(1, 0, 0.5, 0)
+    playerText.Position = UDim2.new(0, 0, 0.5, 0)
+    playerText.Text = playerName .. " joined the game"
+    playerText.TextColor3 = Color3.fromRGB(200, 200, 210)
+    playerText.BackgroundTransparency = 1
+    playerText.Font = Enum.Font.Gotham
+    playerText.TextSize = 18
+    playerText.Parent = logoFrame
+    
+    -- زر إغلاق الشعار
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0, 20, 0, 20)
+    closeButton.Position = UDim2.new(1, -25, 0, 5)
+    closeButton.Text = "×"
+    closeButton.TextColor3 = Color3.fromRGB(220, 220, 230)
+    closeButton.TextSize = 18
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+    closeButton.BorderSizePixel = 0
+    closeButton.Parent = logoFrame
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(1, 0)
+    closeCorner.Parent = closeButton
+    
+    closeButton.MouseButton1Click:Connect(function()
+        logoFrame:Destroy()
+    end)
+    
+    -- تأثيرات عند التمرير فوق زر الإغلاق
+    closeButton.MouseEnter:Connect(function()
+        local tween = TweenService:Create(
+            closeButton,
+            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(200, 80, 80)}
+        )
+        tween:Play()
+    end)
+    
+    closeButton.MouseLeave:Connect(function()
+        local tween = TweenService:Create(
+            closeButton,
+            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(180, 60, 60)}
+        )
+        tween:Play()
+    end)
+    
+    -- تأثير الظهور
+    logoFrame.BackgroundTransparency = 1
+    logoText.TextTransparency = 1
+    playerText.TextTransparency = 1
+    closeButton.BackgroundTransparency = 1
+    closeButton.TextTransparency = 1
+    
+    local showTween = TweenService:Create(
+        logoFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0.2}
+    )
+    
+    local textShowTween = TweenService:Create(
+        logoText,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 0}
+    )
+    
+    local playerShowTween = TweenService:Create(
+        playerText,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 0}
+    )
+    
+    local closeShowTween = TweenService:Create(
+        closeButton,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0, TextTransparency = 0}
+    )
+    
+    showTween:Play()
+    textShowTween:Play()
+    playerShowTween:Play()
+    closeShowTween:Play()
+    
+    -- الانتظار ثم إخفاء الشعار
+    wait(3)
+    
+    local hideTween = TweenService:Create(
+        logoFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 1}
+    )
+    
+    local textHideTween = TweenService:Create(
+        logoText,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 1}
+    )
+    
+    local playerHideTween = TweenService:Create(
+        playerText,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 1}
+    )
+    
+    local closeHideTween = TweenService:Create(
+        closeButton,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 1, TextTransparency = 1}
+    )
+    
+    hideTween:Play()
+    textHideTween:Play()
+    playerHideTween:Play()
+    closeHideTween:Play()
+    
+    hideTween.Completed:Connect(function()
+        logoFrame:Destroy()
+    end)
+end
+
+-- كشف دخول اللاعبين الجدد
+Players.PlayerAdded:Connect(function(player)
+    showPlayerLogo(player.Name)
+end)
+
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LOR_SpectateSettings"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 999
+
+-- الإطار الرئيسي بتصميم LOR المميز
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 250, 0, 230)
+Frame.Position = UDim2.new(1, -260, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+
+-- تأثيرات الإطار
+local UICorner = Instance.new("UICorner", Frame)
+UICorner.CornerRadius = UDim.new(0, 14)
+
+local frameGradient = Instance.new("UIGradient")
+frameGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 25)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+}
+frameGradient.Rotation = -15
+frameGradient.Parent = Frame
+
+local frameStroke = Instance.new("UIStroke")
+frameStroke.Color = Color3.fromRGB(60, 120, 200)
+frameStroke.Thickness = 2
+frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+frameStroke.Parent = Frame
+
+-- تأثير توهج خفيف للإطار
+local frameGlow = Instance.new("ImageLabel")
+frameGlow.Size = UDim2.new(1.1, 0, 1.1, 0)
+frameGlow.Position = UDim2.new(-0.05, 0, -0.05, 0)
+frameGlow.BackgroundTransparency = 1
+frameGlow.Image = "rbxassetid://7072717779"
+frameGlow.ImageColor3 = Color3.fromRGB(60, 120, 200)
+frameGlow.ImageTransparency = 0.8
+frameGlow.ScaleType = Enum.ScaleType.Slice
+frameGlow.SliceScale = 0.1
+frameGlow.SliceCenter = Rect.new(100, 100, 100, 100)
+frameGlow.ZIndex = 0
+frameGlow.Parent = Frame
+
+-- شريط العنوان LOR - LORLN
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.Text = "LOR - SPECTATE SYSTEM"
+Title.TextColor3 = Color3.fromRGB(220, 220, 230)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+local titleGradient = Instance.new("UIGradient")
+titleGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 150, 240)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 120, 200))
+}
+titleGradient.Rotation = 90
+titleGradient.Parent = Title
+
+-- شريط السحب المميز
+local dragHandle = Instance.new("Frame")
+dragHandle.Size = UDim2.new(1, 0, 0, 30)
+dragHandle.Position = UDim2.new(0, 0, 0, 0)
+dragHandle.BackgroundTransparency = 1
+dragHandle.Parent = Frame
+
+local dragIcon = Instance.new("ImageLabel")
+dragIcon.Size = UDim2.new(0, 20, 0, 8)
+dragIcon.Position = UDim2.new(0.95, 0, 0.5, 0)
+dragIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+dragIcon.BackgroundTransparency = 1
+dragIcon.Image = "rbxassetid://7072726642"
+dragIcon.ImageColor3 = Color3.fromRGB(100, 150, 220)
+dragIcon.Parent = dragHandle
+
+-- زر التبديل بتصميم LOR المميز
+local SpectateButton = Instance.new("TextButton", Frame)
+SpectateButton.Size = UDim2.new(0.9, 0, 0, 35)
+SpectateButton.Position = UDim2.new(0.05, 0, 0, 35)
+SpectateButton.Text = "SPECTATE: OFF"
+SpectateButton.TextSize = 16
+SpectateButton.Font = Enum.Font.GothamBold
+SpectateButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+SpectateButton.TextColor3 = Color3.new(1, 1, 1)
+SpectateButton.AutoButtonColor = false
+
+local SpectateCorner = Instance.new("UICorner", SpectateButton)
+SpectateCorner.CornerRadius = UDim.new(0, 10)
+
+local spectateGradient = Instance.new("UIGradient")
+spectateGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 30, 30))
+}
+spectateGradient.Rotation = 90
+spectateGradient.Parent = SpectateButton
+
+local spectateStroke = Instance.new("UIStroke")
+spectateStroke.Color = Color3.fromRGB(220, 70, 70)
+spectateStroke.Thickness = 1.5
+spectateStroke.Parent = SpectateButton
+
+-- أزرار التحكم في الكاميرا
+local PrevButton = Instance.new("TextButton", Frame)
+PrevButton.Size = UDim2.new(0.4, 0, 0, 30)
+PrevButton.Position = UDim2.new(0.05, 0, 0, 75)
+PrevButton.Text = "◀ PREV"
+PrevButton.TextSize = 14
+PrevButton.Font = Enum.Font.GothamBold
+PrevButton.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+PrevButton.TextColor3 = Color3.new(1, 1, 1)
+PrevButton.AutoButtonColor = false
+
+local PrevCorner = Instance.new("UICorner", PrevButton)
+PrevCorner.CornerRadius = UDim.new(0, 10)
+
+local prevGradient = Instance.new("UIGradient")
+prevGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 140, 220)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 100, 180))
+}
+prevGradient.Rotation = 90
+prevGradient.Parent = PrevButton
+
+local prevStroke = Instance.new("UIStroke")
+prevStroke.Color = Color3.fromRGB(100, 150, 220)
+prevStroke.Thickness = 1.5
+prevStroke.Parent = PrevButton
+
+local NextButton = Instance.new("TextButton", Frame)
+NextButton.Size = UDim2.new(0.4, 0, 0, 30)
+NextButton.Position = UDim2.new(0.55, 0, 0, 75)
+NextButton.Text = "NEXT ▶"
+NextButton.TextSize = 14
+NextButton.Font = Enum.Font.GothamBold
+NextButton.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+NextButton.TextColor3 = Color3.new(1, 1, 1)
+NextButton.AutoButtonColor = false
+
+local NextCorner = Instance.new("UICorner", NextButton)
+NextCorner.CornerRadius = UDim.new(0, 10)
+
+local nextGradient = Instance.new("UIGradient")
+nextGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 140, 220)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 100, 180))
+}
+nextGradient.Rotation = 90
+nextGradient.Parent = NextButton
+
+local nextStroke = Instance.new("UIStroke")
+nextStroke.Color = Color3.fromRGB(100, 150, 220)
+nextStroke.Thickness = 1.5
+nextStroke.Parent = NextButton
+
+-- اسم اللاعب الحالي
+local PlayerText = Instance.new("TextLabel", Frame)
+PlayerText.Size = UDim2.new(0.9, 0, 0, 25)
+PlayerText.Position = UDim2.new(0.05, 0, 0, 110)
+PlayerText.Text = "Current: None"
+PlayerText.TextColor3 = Color3.fromRGB(220, 220, 230)
+PlayerText.BackgroundTransparency = 1
+PlayerText.Font = Enum.Font.Gotham
+PlayerText.TextSize = 14
+PlayerText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- زر الهيتبوكس
+local HitboxButton = Instance.new("TextButton", Frame)
+HitboxButton.Size = UDim2.new(0.9, 0, 0, 30)
+HitboxButton.Position = UDim2.new(0.05, 0, 0, 140)
+HitboxButton.Text = "HITBOX: OFF"
+HitboxButton.TextSize = 14
+HitboxButton.Font = Enum.Font.GothamBold
+HitboxButton.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+HitboxButton.TextColor3 = Color3.new(1, 1, 1)
+HitboxButton.AutoButtonColor = false
+
+local HitboxCorner = Instance.new("UICorner", HitboxButton)
+HitboxCorner.CornerRadius = UDim.new(0, 10)
+
+local hitboxGradient = Instance.new("UIGradient")
+hitboxGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 140, 220)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 100, 180))
+}
+hitboxGradient.Rotation = 90
+hitboxGradient.Parent = HitboxButton
+
+local hitboxStroke = Instance.new("UIStroke")
+hitboxStroke.Color = Color3.fromRGB(100, 150, 220)
+hitboxStroke.Thickness = 1.5
+hitboxStroke.Parent = HitboxButton
+
+-- التحكم في حجم الهيت بوكس
+local HitboxSizeLabel = Instance.new("TextLabel", Frame)
+HitboxSizeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+HitboxSizeLabel.Position = UDim2.new(0.05, 0, 0, 175)
+HitboxSizeLabel.Text = "Hitbox Size: 5"
+HitboxSizeLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+HitboxSizeLabel.BackgroundTransparency = 1
+HitboxSizeLabel.Font = Enum.Font.Gotham
+HitboxSizeLabel.TextSize = 12
+HitboxSizeLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- أزرار التحكم في الحجم (+ و -)
+local SizeDecreaseButton = Instance.new("TextButton", Frame)
+SizeDecreaseButton.Size = UDim2.new(0.2, 0, 0, 20)
+SizeDecreaseButton.Position = UDim2.new(0.05, 0, 0, 195)
+SizeDecreaseButton.Text = "-"
+SizeDecreaseButton.TextColor3 = Color3.new(1, 1, 1)
+SizeDecreaseButton.TextSize = 16
+SizeDecreaseButton.Font = Enum.Font.GothamBold
+SizeDecreaseButton.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+SizeDecreaseButton.AutoButtonColor = false
+
+local decreaseCorner = Instance.new("UICorner", SizeDecreaseButton)
+decreaseCorner.CornerRadius = UDim.new(0, 5)
+
+local SizeIncreaseButton = Instance.new("TextButton", Frame)
+SizeIncreaseButton.Size = UDim2.new(0.2, 0, 0, 20)
+SizeIncreaseButton.Position = UDim2.new(0.27, 0, 0, 195)
+SizeIncreaseButton.Text = "+"
+SizeIncreaseButton.TextColor3 = Color3.new(1, 1, 1)
+SizeIncreaseButton.TextSize = 16
+SizeIncreaseButton.Font = Enum.Font.GothamBold
+SizeIncreaseButton.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+SizeIncreaseButton.AutoButtonColor = false
+
+local increaseCorner = Instance.new("UICorner", SizeIncreaseButton)
+increaseCorner.CornerRadius = UDim.new(0, 5)
+
+-- زر التصغير المتطور
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 22, 0, 22)
+minimizeButton.Position = UDim2.new(0.92, 0, 0.02, 0)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
+minimizeButton.TextColor3 = Color3.fromRGB(220, 220, 230)
+minimizeButton.Text = "_"
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.TextSize = 16
+minimizeButton.AutoButtonColor = false
+minimizeButton.Parent = Frame
+
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(1, 0)
+minimizeCorner.Parent = minimizeButton
+
+local minimizeGradient = Instance.new("UIGradient")
+minimizeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 140, 220)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 100, 180))
+}
+minimizeGradient.Rotation = 90
+minimizeGradient.Parent = minimizeButton
+
+local minimizeStroke = Instance.new("UIStroke")
+minimizeStroke.Color = Color3.fromRGB(100, 150, 220)
+minimizeStroke.Thickness = 1
+minimizeStroke.Parent = minimizeButton
+
+-- Variables
+local spectateEnabled = false
+local hitboxEnabled = false
+local hitboxSize = 5
+local headboxSize = 3
+local currentPlayerIndex = 1
+local playersList = {}
+local camera = workspace.CurrentCamera
+
+-- تأثيرات عند التمرير
+local hoverTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local clickTweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local smoothTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+-- Function to Update Hitbox
+local function updateHitbox()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            -- تكبير الهيد بوكس (الرأس)
+            if v.Character:FindFirstChild("Head") then
+                local head = v.Character.Head
+                head.Size = Vector3.new(headboxSize, headboxSize, headboxSize)
+                head.Transparency = 0.7
+                head.BrickColor = BrickColor.new("Bright red")
+                head.Material = Enum.Material.Neon
+                
+                -- تأثير توهج للهيد بوكس (أحمر فقط)
+                local glow = head:FindFirstChild("HeadboxGlow") or Instance.new("PointLight")
+                glow.Name = "HeadboxGlow"
+                glow.Brightness = 0.8
+                glow.Range = headboxSize * 2
+                glow.Color = Color3.new(1, 0, 0)
+                glow.Parent = head
+            end
+            
+            -- تكبير الهيت بوكس (الجسم)
+            if v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                hrp.Transparency = 0.7
+                hrp.BrickColor = BrickColor.new("Bright red")
+                hrp.Material = Enum.Material.Neon
+                hrp.CanCollide = false
+                
+                -- تأثير توهج للهيت بوكس (أحمر فقط)
+                local glow = hrp:FindFirstChild("HitboxGlow") or Instance.new("PointLight")
+                glow.Name = "HitboxGlow"
+                glow.Brightness = 0.8
+                glow.Range = hitboxSize * 2
+                glow.Color = Color3.new(1, 0, 0)
+                glow.Parent = hrp
+            end
+            
+            -- تكبير الأجزاء الأخرى من الجسم
+            for _, part in pairs(v.Character:GetChildren()) do
+                if part:IsA("BasePart") and part.Name ~= "Head" and part.Name ~= "HumanoidRootPart" then
+                    part.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                    part.Transparency = 0.7
+                    part.BrickColor = BrickColor.new("Bright red")
+                    part.Material = Enum.Material.Neon
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end
+
+-- Function to Reset Hitboxes
+local function resetHitboxes()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            -- إعادة ضبط الرأس
+            if v.Character:FindFirstChild("Head") then
+                local head = v.Character.Head
+                head.Size = Vector3.new(1, 1, 1)
+                head.Transparency = 0
+                head.BrickColor = BrickColor.new("Medium stone grey")
+                head.Material = Enum.Material.Plastic
+                
+                -- إزالة تأثير التوهج
+                local glow = head:FindFirstChild("HeadboxGlow")
+                if glow then
+                    glow:Destroy()
+                end
+            end
+            
+            -- إعادة ضبط الجسم
+            if v.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = v.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 0
+                hrp.BrickColor = BrickColor.new("Medium stone grey")
+                hrp.Material = Enum.Material.Plastic
+                hrp.CanCollide = true
+                
+                -- إزالة تأثير التوهج
+                local glow = hrp:FindFirstChild("HitboxGlow")
+                if glow then
+                    glow:Destroy()
+                end
+            end
+            
+            -- إعادة ضبط الأجزاء الأخرى
+            for _, part in pairs(v.Character:GetChildren()) do
+                if part:IsA("BasePart") and part.Name ~= "Head" and part.Name ~= "HumanoidRootPart" then
+                    part.Size = Vector3.new(1, 1, 1)
+                    part.Transparency = 0
+                    part.BrickColor = BrickColor.new("Medium stone grey")
+                    part.Material = Enum.Material.Plastic
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end
+
+-- Function to update players list
+local function updatePlayersList()
+    playersList = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(playersList, player)
+        end
+    end
+end
+
+-- Function to spectate player
+local function spectatePlayer(index)
+    if #playersList == 0 then return end
+    
+    if index < 1 then
+        index = #playersList
+    elseif index > #playersList then
+        index = 1
+    end
+    
+    currentPlayerIndex = index
+    local player = playersList[currentPlayerIndex]
+    
+    if player and player.Character and player.Character:FindFirstChild("Humanoid") then
+        camera.CameraSubject = player.Character.Humanoid
+        PlayerText.Text = "Current: " .. player.Name
+    end
+end
+
+-- Function to stop spectating
+local function stopSpectating()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        camera.CameraSubject = LocalPlayer.Character.Humanoid
+    end
+    PlayerText.Text = "Current: None"
+end
+
+-- تحديث قائمة اللاعبين
+updatePlayersList()
+
+-- تأثيرات عند التمرير فوق الأزرار
+SpectateButton.MouseEnter:Connect(function()
+    local targetColor = spectateEnabled and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(200, 60, 60)
+    local tween = TweenService:Create(
+        SpectateButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = targetColor}
+    )
+    tween:Play()
+end)
+
+SpectateButton.MouseLeave:Connect(function()
+    local targetColor = spectateEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(180, 0, 0)
+    local tween = TweenService:Create(
+        SpectateButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = targetColor}
+    )
+    tween:Play()
+end)
+
+PrevButton.MouseEnter:Connect(function()
+    local tween = TweenService:Create(
+        PrevButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(80, 160, 240)}
+    )
+    tween:Play()
+end)
+
+PrevButton.MouseLeave:Connect(function()
+    local tween = TweenService:Create(
+        PrevButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(60, 120, 200)}
+    )
+    tween:Play()
+end)
+
+NextButton.MouseEnter:Connect(function()
+    local tween = TweenService:Create(
+        NextButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(80, 160, 240)}
+    )
+    tween:Play()
+end)
+
+NextButton.MouseLeave:Connect(function()
+    local tween = TweenService:Create(
+        NextButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(60, 120, 200)}
+    )
+    tween:Play()
+end)
+
+HitboxButton.MouseEnter:Connect(function()
+    local targetColor = hitboxEnabled and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(80, 160, 240)
+    local tween = TweenService:Create(
+        HitboxButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = targetColor}
+    )
+    tween:Play()
+end)
+
+HitboxButton.MouseLeave:Connect(function()
+    local targetColor = hitboxEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(60, 120, 200)
+    local tween = TweenService:Create(
+        HitboxButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = targetColor}
+    )
+    tween:Play()
+end)
+
+SizeDecreaseButton.MouseEnter:Connect(function()
+    local tween = TweenService:Create(
+        SizeDecreaseButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(200, 80, 80)}
+    )
+    tween:Play()
+end)
+
+SizeDecreaseButton.MouseLeave:Connect(function()
+    local tween = TweenService:Create(
+        SizeDecreaseButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(180, 60, 60)}
+    )
+    tween:Play()
+end)
+
+SizeIncreaseButton.MouseEnter:Connect(function()
+    local tween = TweenService:Create(
+        SizeIncreaseButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(80, 200, 80)}
+    )
+    tween:Play()
+end)
+
+SizeIncreaseButton.MouseLeave:Connect(function()
+    local tween = TweenService:Create(
+        SizeIncreaseButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(60, 180, 60)}
+    )
+    tween:Play()
+end)
+
+minimizeButton.MouseEnter:Connect(function()
+    local tween = TweenService:Create(
+        minimizeButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(80, 140, 220), Size = UDim2.new(0, 24, 0, 24)}
+    )
+    tween:Play()
+end)
+
+minimizeButton.MouseLeave:Connect(function()
+    local tween = TweenService:Create(
+        minimizeButton,
+        hoverTweenInfo,
+        {BackgroundColor3 = Color3.fromRGB(60, 120, 200), Size = UDim2.new(0, 22, 0, 22)}
+    )
+    tween:Play()
+end)
+
+-- Toggle Spectate Function
+SpectateButton.MouseButton1Click:Connect(function()
+    spectateEnabled = not spectateEnabled
+    if spectateEnabled then
+        SpectateButton.Text = "SPECTATE: ON"
+        
+        local tween = TweenService:Create(
+            SpectateButton,
+            smoothTweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(0, 150, 0)}
+        )
+        tween:Play()
+        
+        updatePlayersList()
+        spectatePlayer(currentPlayerIndex)
+    else
+        SpectateButton.Text = "SPECTATE: OFF"
+        
+        local tween = TweenService:Create(
+            SpectateButton,
+            smoothTweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}
+        )
+        tween:Play()
+        
+        stopSpectating()
+    end
+end)
+
+-- Previous Player Function
+PrevButton.MouseButton1Click:Connect(function()
+    if spectateEnabled then
+        currentPlayerIndex = currentPlayerIndex - 1
+        spectatePlayer(currentPlayerIndex)
+    end
+end)
+
+-- Next Player Function
+NextButton.MouseButton1Click:Connect(function()
+    if spectateEnabled then
+        currentPlayerIndex = currentPlayerIndex + 1
+        spectatePlayer(currentPlayerIndex)
+    end
+end)
+
+-- Toggle Hitbox Function
+HitboxButton.MouseButton1Click:Connect(function()
+    hitboxEnabled = not hitboxEnabled
+    if hitboxEnabled then
+        HitboxButton.Text = "HITBOX: ON"
+        
+        local tween = TweenService:Create(
+            HitboxButton,
+            smoothTweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(0, 150, 0)}
+        )
+        tween:Play()
+        
+        updateHitbox()
+    else
+        HitboxButton.Text = "HITBOX: OFF"
+        
+        local tween = TweenService:Create(
+            HitboxButton,
+            smoothTweenInfo,
+            {BackgroundColor3 = Color3.fromRGB(60, 120, 200)}
+        )
+        tween:Play()
+        
+        resetHitboxes()
+    end
+end)
+
+-- وظيفة التصغير
+local isMinimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    
+    if isMinimized then
+        -- تأثير تصغير مع الرسوم المتحركة
+        local tween = TweenService:Create(
+            Frame,
+            TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 250, 0, 35)}
+        )
+        tween:Play()
+        
+        minimizeButton.Text = "+"
+        
+        -- إخفاء المحتوى تدريجياً
+        SpectateButton.Visible = false
+        PrevButton.Visible = false
+        NextButton.Visible = false
+        PlayerText.Visible = false
+        HitboxButton.Visible = false
+        HitboxSizeLabel.Visible = false
+        SizeDecreaseButton.Visible = false
+        SizeIncreaseButton.Visible = false
+    else
+        -- تأثير إعادة التكبير مع الرسوم المتحركة
+        local tween = TweenService:Create(
+            Frame,
+            TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 250, 0, 230)}
+        )
+        tween:Play()
+        
+        minimizeButton.Text = "_"
+        
+        -- إظهار المحتوى بعد التأثير
+        delay(0.3, function()
+            SpectateButton.Visible = true
+            PrevButton.Visible = true
+            NextButton.Visible = true
+            PlayerText.Visible = true
+            HitboxButton.Visible = true
+            HitboxSizeLabel.Visible = true
+            SizeDecreaseButton.Visible = true
+            SizeIncreaseButton.Visible = true
+        end)
+    end
+end)
+
+-- وظيفة السحب المتطورة
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    local newX = startPos.X.Offset + delta.X
+    local newY = startPos.Y.Offset + delta.Y
+    
+    -- التأكد من بقاء الإطار داخل الشاشة
+    newX = math.clamp(newX, 0, ScreenGui.AbsoluteSize.X - Frame.AbsoluteSize.X)
+    newY = math.clamp(newY, 0, ScreenGui.AbsoluteSize.Y - Frame.AbsoluteSize.Y)
+    
+    Frame.Position = UDim2.new(0, newX, 0, newY)
+end
+
+dragHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        
+        -- تأثير عند السحب
+        local tween = TweenService:Create(
+            Frame,
+            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(25, 25, 30)}
+        )
+        tween:Play()
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                
+                -- إعادة اللون بعد السحب
+                local tween = TweenService:Create(
+                    Frame,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                    {BackgroundColor3 = Color3.fromRGB(20, 20, 25)}
+                )
+                tween:Play()
+            end
+        end)
+    end
+end)
+
+dragHandle.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- التحكم في حجم الهيت بوكس
+local function updateHitboxSize()
+    HitboxSizeLabel.Text = "Hitbox Size: " .. hitboxSize
+    
+    if hitboxEnabled then
+        updateHitbox()
+    end
+end
+
+SizeDecreaseButton.MouseButton1Click:Connect(function()
+    if hitboxSize > 1 then
+        hitboxSize = hitboxSize - 1
+        headboxSize = math.max(1, hitboxSize - 2)
+        updateHitboxSize()
+    end
+end)
+
+SizeIncreaseButton.MouseButton1Click:Connect(function()
+    if hitboxSize < 20 then
+        hitboxSize = hitboxSize + 1
+        headboxSize = math.max(1, hitboxSize - 2)
+        updateHitboxSize()
+    end
+end)
+
+-- Update Hitbox on Render
+RunService.RenderStepped:Connect(function()
+    if hitboxEnabled then
+        updateHitbox()
+    end
+end)
+
+-- اختصارات لوحة المفاتيح
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.H and UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) then
+        HitboxButton.MouseButton1Click()
+    elseif input.KeyCode == Enum.KeyCode.S and UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) then
+        SpectateButton.MouseButton1Click()
+    elseif input.KeyCode == Enum.KeyCode.LeftBracket and spectateEnabled then
+        PrevButton.MouseButton1Click()
+    elseif input.KeyCode == Enum.KeyCode.RightBracket and spectateEnabled then
+        NextButton.MouseButton1Click()
+    elseif input.KeyCode == Enum.KeyCode.Minus and hitboxEnabled then
+        SizeDecreaseButton.MouseButton1Click()
+    elseif input.KeyCode == Enum.KeyCode.Equals and hitboxEnabled then
+        SizeIncreaseButton.MouseButton1Click()
+    end
+end)
+
+-- تحديث قائمة اللاعبين عند دخول أو خروج لاعب
+Players.PlayerAdded:Connect(function(player)
+    updatePlayersList()
+    if spectateEnabled then
+        spectatePlayer(currentPlayerIndex)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    updatePlayersList()
+    if spectateEnabled then
+        spectatePlayer(currentPlayerIndex)
+    end
+end)
+
+-- عرض شعار لجميع اللاعبين الموجودين عند التشغيل
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        showPlayerLogo(player.Name)
+        wait(0.5) -- تأخير بين كل شعار
+    end
+end
+
+print("تم تحميل نظام المشاهدة LOR - LORLN بنجاح مع نظام الشعارات والكاميرا وتكبير الهيد بوكس!")
