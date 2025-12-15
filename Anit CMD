@@ -1,1 +1,424 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local plr = Players.LocalPlayer
+local playerGui = plr:WaitForChild("PlayerGui")
+
+-- List of allowed users
+local allowedUsers = {
+    "ONIRYTC",
+    "Cola_bola99", 
+    "Zko2710mm",
+    "Spaiderman83628292",
+    "M5_1D",
+    "batman803228",
+    "xcx5184",
+    -- يمكن إضافة المزيد
+}
+
+-- Check if user is allowed
+local function isUserAllowed()
+    local username = plr.Name
+    for _, allowedName in ipairs(allowedUsers) do
+        if username == allowedName then
+            return true
+        end
+    end
+    return false
+end
+
+-- If user is not allowed, stop script
+if not isUserAllowed() then
+    print("⛔ This script is for allowed users only!")
+    warn("You are not allowed to use this script")
+    return -- Stop script execution
+end
+
+-- Main ScreenGui
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "LOR_ANTI_SPAM"
+screenGui.ResetOnSpawn = false
+
+-- شكراً على الشراء بالأنميشن
+local thankYouMsg = Instance.new("TextLabel", screenGui)
+thankYouMsg.Text = "شكراً على الشراء ❤️"
+thankYouMsg.Size = UDim2.new(0, 250, 0, 40)
+thankYouMsg.Position = UDim2.new(0.5, -125, 0.15, 0)
+thankYouMsg.BackgroundColor3 = Color3.fromRGB(0, 40, 80)
+thankYouMsg.TextColor3 = Color3.fromRGB(255, 215, 0) -- ذهبي
+thankYouMsg.Font = Enum.Font.GothamBold
+thankYouMsg.TextSize = 16
+thankYouMsg.BorderSizePixel = 0
+thankYouMsg.ZIndex = 100
+
+local thankYouCorner = Instance.new("UICorner", thankYouMsg)
+thankYouCorner.CornerRadius = UDim.new(0, 10)
+
+local byLabel = Instance.new("TextLabel", screenGui)
+byLabel.Text = "by  ONIRYTC /ez"
+byLabel.Size = UDim2.new(0, 180, 0, 25)
+byLabel.Position = UDim2.new(0.5, -90, 0.21, 0)
+byLabel.BackgroundTransparency = 1
+byLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+byLabel.Font = Enum.Font.GothamBold
+byLabel.TextSize = 14
+byLabel.ZIndex = 100
+
+-- إخفاء الرسائل بعد 4 ثواني
+task.spawn(function()
+    task.wait(4)
+    thankYouMsg:Destroy()
+    byLabel:Destroy()
+end)
+
+-- Main protection frame
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 220, 0, 110)
+frame.Position = UDim2.new(0.5, -110, 0.4, -55)
+frame.BackgroundColor3 = Color3.fromRGB(15, 20, 35) -- لون أغمق
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Visible = true
+
+local uiCorner = Instance.new("UICorner", frame)
+uiCorner.CornerRadius = UDim.new(0, 14)
+
+-- إضافة تأثير توهج
+local glow = Instance.new("UIStroke", frame)
+glow.Color = Color3.fromRGB(0, 150, 255)
+glow.Thickness = 2
+glow.Transparency = 0.5
+
+-- Title with gradient effect
+local title = Instance.new("TextLabel", frame)
+title.Text = "🛡️ LOR ANTI SPAM"
+title.Size = UDim2.new(1, 0, 0, 32)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundColor3 = Color3.fromRGB(0, 60, 120) -- أزرق أغمق
+title.TextColor3 = Color3.fromRGB(0, 255, 255) -- سماوي
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 16
+title.BorderSizePixel = 0
+
+local titleCorner = Instance.new("UICorner", title)
+titleCorner.CornerRadius = UDim.new(0, 14)
+
+-- إضافة خط تحت العنوان
+local titleLine = Instance.new("Frame", frame)
+titleLine.Size = UDim2.new(0.8, 0, 0, 2)
+titleLine.Position = UDim2.new(0.1, 0, 0, 32)
+titleLine.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+titleLine.BorderSizePixel = 0
+
+-- Content frame
+local contentFrame = Instance.new("Frame", frame)
+contentFrame.Position = UDim2.new(0, 0, 0, 40)
+contentFrame.Size = UDim2.new(1, 0, 1, -40)
+contentFrame.BackgroundTransparency = 1
+
+-- Start/Stop Protection Button with better design
+local protectButton = Instance.new("TextButton", contentFrame)
+protectButton.Text = "🟢 START"
+protectButton.Size = UDim2.new(0.85, 0, 0, 36)
+protectButton.Position = UDim2.new(0.075, 0, 0.1, 0)
+protectButton.BackgroundColor3 = Color3.fromRGB(0, 120, 60) -- أخضر جميل
+protectButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+protectButton.Font = Enum.Font.GothamBold
+protectButton.TextSize = 14
+protectButton.BorderSizePixel = 0
+
+local protectCorner = Instance.new("UICorner", protectButton)
+protectCorner.CornerRadius = UDim.new(0, 10)
+
+-- إضافة تأثير للزر
+local buttonGlow = Instance.new("UIStroke", protectButton)
+buttonGlow.Color = Color3.fromRGB(0, 255, 150)
+buttonGlow.Thickness = 1.5
+
+-- Status indicator
+local statusLabel = Instance.new("TextLabel", contentFrame)
+statusLabel.Text = "Status: OFF"
+statusLabel.Size = UDim2.new(0.85, 0, 0, 24)
+statusLabel.Position = UDim2.new(0.075, 0, 0.65, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80) -- أحمر
+statusLabel.Font = Enum.Font.GothamSemibold
+statusLabel.TextSize = 13
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- إضافة أيقونة صغيرة
+local statusIcon = Instance.new("TextLabel", contentFrame)
+statusIcon.Text = "⭕"
+statusIcon.Size = UDim2.new(0, 20, 0, 20)
+statusIcon.Position = UDim2.new(0.83, 0, 0.65, 2)
+statusIcon.BackgroundTransparency = 1
+statusIcon.TextColor3 = Color3.fromRGB(255, 80, 80)
+statusIcon.Font = Enum.Font.GothamBold
+statusIcon.TextSize = 14
+
+-- Info Frame (logs)
+local infoFrame = Instance.new("Frame", screenGui)
+infoFrame.Size = UDim2.new(0, 220, 0, 130)
+infoFrame.Position = UDim2.new(0.5, -110, 0.75, -65)
+infoFrame.BackgroundColor3 = Color3.fromRGB(15, 20, 35)
+infoFrame.BorderSizePixel = 0
+infoFrame.Active = true
+infoFrame.Draggable = true
+
+local infoCorner = Instance.new("UICorner", infoFrame)
+infoCorner.CornerRadius = UDim.new(0, 14)
+
+local infoGlow = Instance.new("UIStroke", infoFrame)
+infoGlow.Color = Color3.fromRGB(0, 150, 255)
+infoGlow.Thickness = 2
+infoGlow.Transparency = 0.5
+
+local infoTitle = Instance.new("TextLabel", infoFrame)
+infoTitle.Text = "📊 System Logs"
+infoTitle.Size = UDim2.new(1, 0, 0, 28)
+infoTitle.Position = UDim2.new(0, 0, 0, 0)
+infoTitle.BackgroundColor3 = Color3.fromRGB(0, 60, 120)
+infoTitle.TextColor3 = Color3.fromRGB(0, 255, 255)
+infoTitle.Font = Enum.Font.GothamBold
+infoTitle.TextSize = 14
+infoTitle.BorderSizePixel = 0
+
+local infoTitleCorner = Instance.new("UICorner", infoTitle)
+infoTitleCorner.CornerRadius = UDim.new(0, 14)
+
+-- Scrolling frame for logs
+local scrollFrame = Instance.new("ScrollingFrame", infoFrame)
+scrollFrame.Size = UDim2.new(0.92, 0, 0.72, 0)
+scrollFrame.Position = UDim2.new(0.04, 0, 0.25, 0)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 4
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 255)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local logLayout = Instance.new("UIListLayout", scrollFrame)
+logLayout.Padding = UDim.new(0, 3)
+logLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Control variables
+local deleting = false
+local nightVisionActive = false
+local lastDeleteTime = 0
+local deleteInterval = 20 -- Every 20 seconds
+local deletionLogs = {}
+
+-- Delete targets list
+local deleteTargets = {
+    -- From PlayerGui
+    PlayerGui = {
+        "CommandMenucommandLogs",
+        "CommandMenuchatLogs", 
+        "Notices",
+        "CustomTopBar",
+        "CmdBar",
+        "HDAdminNightVision"
+    },
+    
+    -- From Workspace
+    Workspace = {
+        "HDAdminNightVision"
+    },
+    
+    -- From Characters
+    Characters = {
+        "HDAdminNightVision"
+    }
+}
+
+-- Function to add log to info frame
+local function addDeletionLog(logText)
+    -- Add to logs array
+    table.insert(deletionLogs, 1, logText) -- Add at beginning
+    
+    -- Keep only last 5 logs
+    if #deletionLogs > 5 then
+        table.remove(deletionLogs, 6)
+    end
+    
+    -- Clear old logs
+    for _, child in ipairs(scrollFrame:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+    
+    -- Add new logs with better design
+    for i, log in ipairs(deletionLogs) do
+        local logLabel = Instance.new("TextLabel")
+        logLabel.Text = "• " .. log
+        logLabel.Size = UDim2.new(0.95, 0, 0, 20)
+        logLabel.BackgroundTransparency = 1
+        logLabel.TextColor3 = Color3.fromRGB(0, 255, 200) -- أزرق فاتح
+        logLabel.Font = Enum.Font.Gotham
+        logLabel.TextSize = 11
+        logLabel.TextXAlignment = Enum.TextXAlignment.Left
+        logLabel.LayoutOrder = i
+        logLabel.Parent = scrollFrame
+    end
+    
+    -- Update canvas size
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #deletionLogs * 23)
+end
+
+-- NightVision control function
+local function toggleNightVision(state)
+    if state == "start" then
+        -- START: Change name to 1NightVision
+        pcall(function()
+            local nightVision = ReplicatedStorage:WaitForChild("HDAdminHDClient")
+                :WaitForChild("Assets")
+                :WaitForChild("NightVision")
+            nightVision.Name = "1NightVision"
+            print("✅ NightVision Activated")
+        end)
+    elseif state == "stop" then
+        -- STOP: Change back to NightVision
+        pcall(function()
+            local nightVision = ReplicatedStorage:WaitForChild("HDAdminHDClient")
+                :WaitForChild("Assets")
+                :WaitForChild("1NightVision")
+            nightVision.Name = "NightVision"
+            print("❌ NightVision Deactivated")
+        end)
+    end
+end
+
+-- Template control function
+local function toggleTemplate(state)
+    if state == "start" then
+        -- START: Change to Template
+        pcall(function()
+            local template = playerGui:WaitForChild("HDAdminInterface")
+                :WaitForChild("MenuTemplates")
+                :WaitForChild("Template5")
+            template.Name = "Template"
+            print("✅ Template Activated")
+        end)
+    elseif state == "stop" then
+        -- STOP: Change back to Template5
+        pcall(function()
+            local template = playerGui:WaitForChild("HDAdminInterface")
+                :WaitForChild("MenuTemplates")
+                :WaitForChild("Template")
+            template.Name = "Template5"
+            print("❌ Template Deactivated")
+        end)
+    end
+end
+
+-- Complete delete function
+local function deleteAllElements()
+    local currentTime = tick()
+    
+    -- Delete only every 20 seconds
+    if currentTime - lastDeleteTime < deleteInterval then
+        return
+    end
+    
+    lastDeleteTime = currentTime
+    
+    local deletedItems = {}
+    
+    -- Delete from PlayerGui
+    for _, name in ipairs(deleteTargets.PlayerGui) do
+        pcall(function()
+            local target = playerGui:FindFirstChild(name, true)
+            if target then
+                target:Destroy()
+                table.insert(deletedItems, name)
+            end
+        end)
+    end
+    
+    -- Delete from Workspace
+    for _, name in ipairs(deleteTargets.Workspace) do
+        pcall(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name == name then
+                    obj:Destroy()
+                    table.insert(deletedItems, name)
+                end
+            end
+        end)
+    end
+    
+    -- Delete from Characters
+    for _, name in ipairs(deleteTargets.Characters) do
+        pcall(function()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character then
+                    local target = player.Character:FindFirstChild(name, true)
+                    if target then
+                        target:Destroy()
+                        table.insert(deletedItems, name)
+                    end
+                end
+            end
+        end)
+    end
+    
+    -- Add logs for deleted items
+    if #deletedItems > 0 then
+        addDeletionLog("Elements Cleaned")
+    end
+end
+
+-- Main loop
+RunService.Heartbeat:Connect(function()
+    if deleting then
+        deleteAllElements()
+    end
+end)
+
+-- Button events
+protectButton.MouseButton1Click:Connect(function()
+    deleting = not deleting
+    if deleting then
+        -- Start protection
+        protectButton.Text = "🔴 STOP"
+        protectButton.BackgroundColor3 = Color3.fromRGB(180, 30, 30) -- أحمر جميل
+        buttonGlow.Color = Color3.fromRGB(255, 80, 80)
+        
+        statusLabel.Text = "Status: ACTIVE"
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 100) -- أخضر
+        statusIcon.Text = "✅"
+        statusIcon.TextColor3 = Color3.fromRGB(0, 255, 100)
+        
+        -- Start NightVision and Template
+        toggleNightVision("start")
+        toggleTemplate("start")
+        
+        addDeletionLog("Protection Started")
+    else
+        -- Stop protection
+        protectButton.Text = "🟢 START"
+        protectButton.BackgroundColor3 = Color3.fromRGB(0, 120, 60)
+        buttonGlow.Color = Color3.fromRGB(0, 255, 150)
+        
+        statusLabel.Text = "Status: OFF"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        statusIcon.Text = "⭕"
+        statusIcon.TextColor3 = Color3.fromRGB(255, 80, 80)
+        
+        -- Stop NightVision and Template
+        toggleNightVision("stop")
+        toggleTemplate("stop")
+        
+        addDeletionLog("Protection Stopped")
+    end
+end)
+
+-- إضافة رسالة بداية
+addDeletionLog("System Ready")
+addDeletionLog("User: " .. plr.Name)
+
+print("🛡️ LOR ANTI SPAM Activated!")
+print("👤 Welcome, " .. plr.Name .. "!")
+print("💎 Script by ONIRYTC")
