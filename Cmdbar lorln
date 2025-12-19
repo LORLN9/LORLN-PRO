@@ -957,7 +957,7 @@ ButtonCorner.CornerRadius = UDim.new(0, 8)
 ButtonCorner.Parent = Button
 
 -- الأوامر
-local commandBundle = ";bundle me 148351107651039"
+local commandBundle = ";bundle me 28334386015043"
 local commandUnchar = ";unchar"
 
 -- حالة الزر
