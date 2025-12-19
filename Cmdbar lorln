@@ -898,9 +898,11 @@ local HDAdmin = ReplicatedStorage:WaitForChild("HDAdminHDClient")
 local Signals = HDAdmin:WaitForChild("Signals")
 local RequestCommandModification = Signals:WaitForChild("RequestCommandModification")
 
+
 -- إنشاء ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HDAdminGUI"
+ScreenGui.ResetOnSpawn = false -- <<< هذا السطر المهم
 ScreenGui.Parent = PlayerGui
 
 -- إنشاء Frame للواجهة
@@ -937,7 +939,7 @@ DragText.BackgroundTransparency = 1
 DragText.TextColor3 = Color3.new(1, 1, 1)
 DragText.Font = Enum.Font.SourceSansBold
 DragText.TextSize = 12
-DragText.Text = "بديل bundle lorln"
+DragText.Text = "تخريب الماب:ez"
 DragText.Parent = DragBar
 
 -- زر On/Off
@@ -967,7 +969,7 @@ local isOn = false
 Button.MouseButton1Click:Connect(function()
     isOn = not isOn
     if isOn then
-        Button.Text = "تشغيل bundle"
+        Button.Text = "تشغيل"
         Button.BackgroundColor3 = Color3.fromRGB(0, 220, 0) -- أخضر عند التشغيل
         RequestCommandModification:InvokeServer(commandBundle)
     else
