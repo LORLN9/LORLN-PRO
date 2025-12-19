@@ -14,7 +14,176 @@ local Services = setmetatable({}, {
         return cloneref(game:GetService(name))
     end
 })
+-- الخدمات
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
+-- ريموت HDAdmin
+local HDAdmin = ReplicatedStorage:WaitForChild("HDAdminHDClient")
+local Signals = HDAdmin:WaitForChild("Signals")
+local RequestCommandModification = Signals:WaitForChild("RequestCommandModification")
+
+-- إنشاء ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HDAdminGUI"
+ScreenGui.Parent = PlayerGui
+
+-- إنشاء Frame للواجهة
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 180, 0, 70) -- زيادة الحجم لإضافة زر السحب
+Frame.Position = UDim2.new(0.5, -90, 0.5, -35)
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+-- إضافة الزوايا المستديرة
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Frame
+
+-- شريط السحب العلوي
+local DragBar = Instance.new("Frame")
+DragBar.Size = UDim2.new(1, 0, 0, 20)
+DragBar.Position = UDim2.new(0, 0, 0, 0)
+DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+DragBar.BorderSizePixel = 0
+DragBar.Parent = Frame
+
+-- زوايا مستديرة للشريط العلوي فقط
+local DragBarCorner = Instance.new("UICorner")
+DragBarCorner.CornerRadius = UDim.new(0, 10)
+DragBarCorner.Parent = DragBar
+
+-- نص السحب
+local DragText = Instance.new("TextLabel")
+DragText.Size = UDim2.new(1, 0, 1, 0)
+DragText.Position = UDim2.new(0, 0, 0, 0)
+DragText.BackgroundTransparency = 1
+DragText.TextColor3 = Color3.new(1, 1, 1)
+DragText.Font = Enum.Font.SourceSansBold
+DragText.TextSize = 12
+DragText.Text = "بديل bundle"
+DragText.Parent = DragBar
+
+-- زر On/Off
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -20, 0, 40) -- تصغير قليلاً لإضافة مساحة
+Button.Position = UDim2.new(0, 10, 0, 25)
+Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.Font = Enum.Font.SourceSansBold
+Button.TextSize = 18
+Button.Text = "OFF"
+Button.Parent = Frame
+
+-- زوايا مستديرة للزر
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 8)
+ButtonCorner.Parent = Button
+
+-- الأوامر
+local commandBundle = ";bundle me 148351107651039"
+local commandUnchar = ";unchar"
+
+-- حالة الزر
+local isOn = false
+
+-- وظيفة الضغط على الزر
+Button.MouseButton1Click:Connect(function()
+    isOn = not isOn
+    if isOn then
+        Button.Text = "تشغيل bundle"
+        Button.BackgroundColor3 = Color3.fromRGB(0, 220, 0) -- أخضر عند التشغيل
+        RequestCommandModification:InvokeServer(commandBundle)
+    else
+        Button.Text = "ايقاف"
+        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- أزرق عند الإيقاف
+        RequestCommandModification:InvokeServer(commandUnchar)
+    end
+end)
+
+-- === نظام السحب ===
+local dragging = false
+local dragInput, startPos, startInputPos
+
+local function update(input)
+    local delta = input.Position - startInputPos
+    Frame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+-- السماح بالسحب من الشريط العلوي فقط
+DragBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        startInputPos = input.Position
+        startPos = Frame.Position
+
+        -- تغيير لون شريط السحب عند البدء
+        DragBar.BackgroundColor3 = Color3.fromRGB(0, 150, 250)
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                -- إعادة لون شريط السحب
+                DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+            end
+        end)
+    end
+end)
+
+DragBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- إضافة تأثير عند التمرير فوق الشريط
+DragBar.MouseEnter:Connect(function()
+    if not dragging then
+        DragBar.BackgroundColor3 = Color3.fromRGB(0, 140, 220)
+    end
+end)
+
+DragBar.MouseLeave:Connect(function()
+    if not dragging then
+        DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    end
+end)
+
+-- إضافة تأثيرات للزر الرئيسي
+Button.MouseEnter:Connect(function()
+    if not isOn then
+        Button.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    else
+        Button.BackgroundColor3 = Color3.fromRGB(0, 230, 20)
+    end
+end)
+
+Button.MouseLeave:Connect(function()
+    if not isOn then
+        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    else
+        Button.BackgroundColor3 = Color3.fromRGB(0, 220, 0)
+    end
+end)
+
+print("✅ HDAdmin GUI Loaded!")
+print("📌 Use the top bar to drag the interface")
+print("🔧 Drag feature added successfully!")
 local Players = Services.Players
 local RunService = Services.RunService
 local UserInputService = Services.UserInputService
