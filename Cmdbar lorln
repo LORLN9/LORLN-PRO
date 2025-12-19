@@ -234,7 +234,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 50, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "🌙 Dark Sky Controller"
+title.Text = "🌙 Dark Sky Controller LORLN "
 title.Font = Enum.Font.GothamBold
 title.TextSize = 16
 title.TextColor3 = darkSkyColors.Text
@@ -937,7 +937,7 @@ DragText.BackgroundTransparency = 1
 DragText.TextColor3 = Color3.new(1, 1, 1)
 DragText.Font = Enum.Font.SourceSansBold
 DragText.TextSize = 12
-DragText.Text = "بديل bundle"
+DragText.Text = "بديل bundle lorln"
 DragText.Parent = DragBar
 
 -- زر On/Off
