@@ -1,1 +1,335 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/LORLN9/LORLN-PRO/refs/heads/main/Lorln%20OP-JUMP"))()
+--==================================================
+-- Loader بتصميم LORD
+--==================================================
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local plr = Players.LocalPlayer
+
+-- حذف اللوردر القديم إن وجد
+if plr.PlayerGui:FindFirstChild("LORD_Loader") then
+    plr.PlayerGui.LORD_Loader:Destroy()
+end
+
+-- ألوان تصميم LORD
+local LORD_Theme = {
+    Main = Color3.fromRGB(20, 0, 0),
+    Secondary = Color3.fromRGB(30, 0, 0),
+    Accent = Color3.fromRGB(255, 40, 40),
+    Text = Color3.fromRGB(255, 255, 255)
+}
+
+-- إنشاء الواجهة
+local loaderGui = Instance.new("ScreenGui")
+loaderGui.Name = "LORD_Loader"
+loaderGui.Parent = plr:WaitForChild("PlayerGui")
+loaderGui.ResetOnSpawn = false
+
+-- الإطار الرئيسي
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 320, 0, 180)
+frame.Position = UDim2.new(0.5, -160, 0.5, -90)
+frame.BackgroundColor3 = LORD_Theme.Main
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Selectable = true
+frame.Parent = loaderGui
+
+-- زوايا مستديرة
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = frame
+
+-- حدود حمراء
+local frameStroke = Instance.new("UIStroke")
+frameStroke.Color = LORD_Theme.Accent
+frameStroke.Thickness = 3
+frameStroke.Parent = frame
+
+-- الهيدر
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 50)
+header.Position = UDim2.new(0, 0, 0, 0)
+header.BackgroundColor3 = LORD_Theme.Secondary
+header.Parent = frame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12, 0, 0)
+headerCorner.Parent = header
+
+-- شعار LORD
+local logo = Instance.new("ImageLabel")
+logo.Size = UDim2.new(0, 35, 0, 35)
+logo.Position = UDim2.new(0, 15, 0.5, -17.5)
+logo.Image = "rbxassetid://131690304470847"
+logo.BackgroundTransparency = 1
+logo.Parent = header
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = LORD_Theme.Accent
+logoStroke.Thickness = 2
+logoStroke.Parent = logo
+
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(0.2, 0)
+logoCorner.Parent = logo
+
+-- عنوان LORD
+local lordTitle = Instance.new("TextLabel")
+lordTitle.Size = UDim2.new(1, -60, 0.6, 0)
+lordTitle.Position = UDim2.new(0, 60, 0, 8)
+lordTitle.Text = "LORD"
+lordTitle.TextColor3 = LORD_Theme.Text
+lordTitle.Font = Enum.Font.GothamBlack
+lordTitle.TextSize = 22
+lordTitle.TextXAlignment = Enum.TextXAlignment.Left
+lordTitle.BackgroundTransparency = 1
+lordTitle.Parent = header
+
+local lordSubtitle = Instance.new("TextLabel")
+lordSubtitle.Size = UDim2.new(1, -60, 0.4, 0)
+lordSubtitle.Position = UDim2.new(0, 60, 0.6, 0)
+lordSubtitle.Text = "SCRIPT LOADER"
+lordSubtitle.TextColor3 = LORD_Theme.Accent
+lordSubtitle.Font = Enum.Font.GothamBold
+lordSubtitle.TextSize = 12
+lordSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+lordSubtitle.BackgroundTransparency = 1
+lordSubtitle.Parent = header
+
+-- الرسالة الرئيسية
+local mainMessage = Instance.new("TextLabel")
+mainMessage.Size = UDim2.new(1, -40, 0, 40)
+mainMessage.Position = UDim2.new(0, 20, 0, 65)
+mainMessage.BackgroundTransparency = 1
+mainMessage.Text = "LOADING FLING SCRIPT..."
+mainMessage.Font = Enum.Font.GothamBold
+mainMessage.TextSize = 18
+mainMessage.TextColor3 = LORD_Theme.Accent
+mainMessage.TextXAlignment = Enum.TextXAlignment.Center
+mainMessage.Parent = frame
+
+-- رسالة ثانوية
+local subMessage = Instance.new("TextLabel")
+subMessage.Size = UDim2.new(1, -40, 0, 20)
+subMessage.Position = UDim2.new(0, 20, 0, 100)
+subMessage.BackgroundTransparency = 1
+subMessage.Text = "Please wait while we prepare the ultimate fling experience"
+subMessage.Font = Enum.Font.Gotham
+subMessage.TextSize = 11
+subMessage.TextColor3 = Color3.fromRGB(180, 180, 180)
+subMessage.TextXAlignment = Enum.TextXAlignment.Center
+subMessage.Parent = frame
+
+-- خلفية شريط التقدم
+local barBG = Instance.new("Frame")
+barBG.Size = UDim2.new(1, -60, 0, 10)
+barBG.Position = UDim2.new(0, 30, 1, -45)
+barBG.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+barBG.BorderSizePixel = 0
+barBG.Parent = frame
+
+local barBGCorner = Instance.new("UICorner")
+barBGCorner.CornerRadius = UDim.new(1, 0)
+barBGCorner.Parent = barBG
+
+local barBGStroke = Instance.new("UIStroke")
+barBGStroke.Color = Color3.fromRGB(80, 0, 0)
+barBGStroke.Thickness = 2
+barBGStroke.Parent = barBG
+
+-- شريط التقدم
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(0, 0, 1, 0)
+bar.BackgroundColor3 = LORD_Theme.Accent
+bar.BorderSizePixel = 0
+bar.Parent = barBG
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = bar
+
+-- نسبة التحميل
+local percentageLabel = Instance.new("TextLabel")
+percentageLabel.Size = UDim2.new(1, 0, 0, 20)
+percentageLabel.Position = UDim2.new(0, 0, 1, 5)
+percentageLabel.BackgroundTransparency = 1
+percentageLabel.Text = "0%"
+percentageLabel.Font = Enum.Font.GothamBold
+percentageLabel.TextSize = 14
+percentageLabel.TextColor3 = LORD_Theme.Text
+percentageLabel.TextXAlignment = Enum.TextXAlignment.Center
+percentageLabel.Parent = barBG
+
+-- نص التذييل
+local footerText = Instance.new("TextLabel")
+footerText.Size = UDim2.new(1, 0, 0, 15)
+footerText.Position = UDim2.new(0, 0, 1, -25)
+footerText.BackgroundTransparency = 1
+footerText.Text = "LORD © 2024 - Premium Scripting"
+footerText.Font = Enum.Font.Gotham
+footerText.TextSize = 10
+footerText.TextColor3 = Color3.fromRGB(120, 120, 120)
+footerText.TextXAlignment = Enum.TextXAlignment.Center
+footerText.Parent = frame
+
+-- نظام السحب للـ Loader
+local dragging, dragInput, mousePos, framePos
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = frame.Position
+        frameStroke.Color = Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+header.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+        frameStroke.Color = LORD_Theme.Accent
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - mousePos
+        frame.Position = UDim2.new(
+            framePos.X.Scale,
+            framePos.X.Offset + delta.X,
+            framePos.Y.Scale,
+            framePos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- أنيميشن التحميل
+local function updateProgress(percent)
+    percentageLabel.Text = math.floor(percent) .. "%"
+    bar.Size = UDim2.new(percent/100, 0, 1, 0)
+end
+
+-- محاكاة عملية التحميل
+local progress = 0
+for i = 1, 100 do
+    progress = i
+    updateProgress(progress)
+    task.wait(0.015) -- سرعة التحميل
+    
+    -- تحديث الرسالة حسب مرحلة التحميل
+    if progress == 25 then
+        mainMessage.Text = "INITIALIZING..."
+    elseif progress == 50 then
+        mainMessage.Text = "LOADING MODULES..."
+    elseif progress == 75 then
+        mainMessage.Text = "SETTING UP UI..."
+    end
+end
+
+updateProgress(100)
+mainMessage.Text = "COMPLETE!"
+subMessage.Text = "Fling script is ready to use"
+
+task.wait(0.5)
+
+-- أنيميشن الإختفاء
+TweenService:Create(frame, TweenInfo.new(0.5), {
+    Size = UDim2.new(0, 0, 0, 0),
+    Position = UDim2.new(0.5, 0, 0.5, 0)
+}):Play()
+
+task.wait(0.5)
+loaderGui:Destroy()
+
+--==================================================
+-- تحميل مكتبة Tora
+--==================================================
+local Library = loadstring(game:HttpGet(
+	"https://raw.githubusercontent.com/liebertsx/Tora-Library/main/src/librarynew",
+	true
+))()
+
+--==================================================
+-- نافذة الواجهة
+--==================================================
+local Window = Library:CreateWindow("Fling Super Strength")
+
+--==================================================
+-- الخدمات
+--==================================================
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
+
+--==================================================
+-- الإعدادات
+--==================================================
+local FLING_VELOCITY_NAME = "FlingVelocity"
+local superFlingEnabled = true
+local flingStrength = 8500000
+
+--==================================================
+-- عناصر الواجهة
+--==================================================
+Window:AddToggle({
+	text = "Super Fling",
+	flag = "SuperFling",
+	callback = function(state)
+		superFlingEnabled = state
+	end,
+})
+
+Window:AddSlider({
+	text = "Fling Strength",
+	flag = "FlingStrength",
+	min = 1000,
+	max = 1000000000,
+	value = flingStrength,
+	callback = function(value)
+		flingStrength = value
+	end,
+})
+
+Window:AddLabel({
+	text = "Enjoy the script :3",
+	type = "label",
+})
+
+Library:Init()
+
+--==================================================
+-- منطق الفلينق
+--==================================================
+Workspace.ChildAdded:Connect(function(child)
+	if child.Name ~= "GrabParts" then return end
+
+	local success, grabPart = pcall(function()
+		return child:WaitForChild("GrabPart", 2)
+			:WaitForChild("WeldConstraint", 2).Part1
+	end)
+
+	if not success or not grabPart then return end
+
+	local bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.Name = FLING_VELOCITY_NAME
+	bodyVelocity.Parent = grabPart
+
+	local connection
+	connection = child:GetPropertyChangedSignal("Parent"):Connect(function()
+		if child.Parent == nil then
+			if superFlingEnabled then
+				bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+				bodyVelocity.Velocity =
+					Workspace.CurrentCamera.CFrame.LookVector * flingStrength
+			else
+				bodyVelocity.MaxForce = Vector3.zero
+			end
+
+			Debris:AddItem(bodyVelocity, 1)
+			if connection then connection:Disconnect() end
+		end
+	end)
+end)
+
+print("LORD Fling Script Loaded Successfully!")
+print("Loader Design: LORD Premium Theme")
