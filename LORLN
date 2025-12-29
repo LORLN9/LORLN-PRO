@@ -5,7 +5,7 @@ local blacklist = {
     ["got_saif"] = true,
     ["osamadhhdydif"] = true,
     ["fastma_storage"] = true,
-    [""] = true,
+    ["zombie321123555"] = true,
     [""] = true,
     [""] = true,
     [""] = true,
@@ -16,6 +16,7 @@ local blacklist = {
 task.wait(1)
 
 if blacklist[plr.Name] then
-    plr:Kick("🚫 Banned from LORLN Premium Scripts برا ولاك ")
+    plr:Kick("🚫 Banned from LORLN Premium Scripts   برا ولاك ")
     return
 end
+
