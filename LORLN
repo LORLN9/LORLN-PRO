@@ -1,4 +1,7 @@
--- نظام القائمة السوداء المحدث (بدون ONIRYTC)
+-- نظام القائمة السوداء المحدث
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+
 local blacklist = {
     ["iLove_Myselfff00"] = true,
     ["Louai_lol"] = true,
@@ -12,9 +15,11 @@ local blacklist = {
     ["aaaaad"] = true
 }
 
+-- تأخير بسيط قبل التحقق
 task.wait(1)
 
+-- التحقق من الاسم في القائمة السوداء
 if blacklist[plr.Name] then
-    plr:Kick("🚫 Banned from LORLN Premium Scripts")
+    plr:Kick("🚫 Banned from LORLN Premium Scripts برا ولاك")
     return
 end
