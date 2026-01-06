@@ -1,1060 +1,135 @@
---[[
-    Dark Sky Emote Controller - Updated Design
-]]
-
-function missing(t, f, fallback)
-    if type(f) == t then return f end
-    return fallback 
-end
-
-cloneref = missing("function", cloneref, function(...) return ... end)
-
-local Services = setmetatable({}, {
-    __index = function(_, name)
-        return cloneref(game:GetService(name))
-    end
-})
-
-local Players = Services.Players
-local RunService = Services.RunService
-local UserInputService = Services.UserInputService
-local TweenService = Services.TweenService
-local ReplicatedStorage = Services.ReplicatedStorage
-
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
-player.CharacterAdded:Connect(function(newCharacter)
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-end)
-
---// Settings - Set Stop On Move to OFF by default
-local Settings = {}
-Settings["Stop On Move"] = false  -- Changed to OFF by default
-Settings["Fade In"]     = 0.1
-Settings["Fade Out"]    = 0.1
-Settings["Weight"]      = 1
-Settings["Speed"]       = 1
-Settings["Allow Invisible"]    = true
-Settings["Time Position"] = 0
-Settings["Use Bundle"] = true
-
---// IDs
-local BUNDLE_ID = 148351107651039
-local EMOJI_ID = 93224413172183
-
-local CurrentTrack
-local lastPosition = character.PrimaryPart and character.PrimaryPart.Position or Vector3.new()
-
---// Find HD Admin Remote
-local HDAdminRemote
-local function findHDAdminRemote()
-    pcall(function()
-        local RS = ReplicatedStorage
-        if RS:FindFirstChild("HDAdminHDClient") then
-            local client = RS.HDAdminHDClient
-            if client:FindFirstChild("Signals") then
-                local signals = client.Signals
-                if signals:FindFirstChild("RequestCommandModification") then
-                    HDAdminRemote = signals.RequestCommandModification
-                end
-            end
-        end
-    end)
-    return HDAdminRemote
-end
-
---// Send HD Admin Command
-local function sendHDAdminCommand(command)
-    if HDAdminRemote or findHDAdminRemote() then
-        pcall(function()
-            HDAdminRemote:InvokeServer(command)
-        end)
-    end
-end
-
---// Play Animation from Script
-local function LoadTrack(id)
-    if CurrentTrack then 
-        CurrentTrack:Stop(0) 
-    end
-
-    local animId
-    local ok, result = pcall(function()
-        return game:GetObjects("rbxassetid://" .. tostring(id))
-    end)
-
-    if ok and result and #result > 0 then
-        local anim = result[1]
-        if anim:IsA("Animation") then
-            animId = anim.AnimationId
-        else
-            animId = "rbxassetid://" .. tostring(id)
-        end
-    else
-        animId = "rbxassetid://" .. tostring(id)
-    end
-
-    local newAnim = Instance.new("Animation")
-    newAnim.AnimationId = animId
-    local newTrack = humanoid:LoadAnimation(newAnim)
-    newTrack.Priority = Enum.AnimationPriority.Action4
-
-    local weight = Settings["Weight"]
-    if weight == 0 then
-        weight = 0.001
-    end
-
-    newTrack:Play(Settings["Fade In"], weight, Settings["Speed"])
-    
-    CurrentTrack = newTrack
-    CurrentTrack.TimePosition = math.clamp(Settings["Time Position"], 0, 1) * CurrentTrack.Length
-
-    return newTrack
-end
-
-local function StopTrack()
-    if CurrentTrack then
-        CurrentTrack:Stop(Settings["Fade Out"])
-        CurrentTrack = nil
-    end
-    
-    if Settings["Use Bundle"] then
-        sendHDAdminCommand(";re")
-    end
-end
-
---// Functions
-local function ActivateBundle()
-    if Settings["Use Bundle"] then
-        sendHDAdminCommand(";bundle me " .. tostring(BUNDLE_ID))
-        return true
-    end
-    return false
-end
-
-local function ActivateEmote()
-    CurrentTrack = LoadTrack(EMOJI_ID)
-    return true
-end
-
-local function ActivateBoth()
-    if Settings["Use Bundle"] then
-        sendHDAdminCommand(";bundle me " .. tostring(BUNDLE_ID))
-        task.wait(0.2)
-    end
-    CurrentTrack = LoadTrack(EMOJI_ID)
-    return true
-end
-
---// Dark Sky Design GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DarkSkyEmotePlayer"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = Services.CoreGui
-
--- Dark Sky Colors
-local darkSkyColors = {
-    Background = Color3.fromRGB(20, 25, 35),
-    Container = Color3.fromRGB(30, 40, 55),
-    Secondary = Color3.fromRGB(40, 55, 75),
-    Accent = Color3.fromRGB(0, 180, 255),
-    Accent2 = Color3.fromRGB(100, 200, 255),
-    Text = Color3.fromRGB(230, 240, 255),
-    SubText = Color3.fromRGB(160, 180, 200),
-    Success = Color3.fromRGB(0, 200, 100),
-    Warning = Color3.fromRGB(255, 180, 0),
-    Danger = Color3.fromRGB(255, 80, 80),
-    Purple = Color3.fromRGB(160, 120, 255),
-    Cyan = Color3.fromRGB(0, 220, 220)
-}
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 180) -- Smaller height
-mainFrame.Position = UDim2.new(0.3, 0, 0.25, 0)
-mainFrame.BackgroundColor3 = darkSkyColors.Background
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = screenGui
-
--- Gradient Background
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 35, 50)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 20, 30))
-})
-gradient.Rotation = 135
-gradient.Parent = mainFrame
-
--- Rounded corners
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 15)
-mainCorner.Parent = mainFrame
-
--- Glow border
-local glow = Instance.new("UIStroke")
-glow.Color = darkSkyColors.Accent
-glow.Thickness = 2
-glow.Transparency = 0.6
-glow.Parent = mainFrame
-
--- Title bar with buttons
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundTransparency = 1
-titleBar.Parent = mainFrame
-
--- Open Button (على اليسار - يظهر فقط عندما تكون الواجهة مخفية)
-local openButton = Instance.new("TextButton")
-openButton.Size = UDim2.new(0, 40, 0, 40)
-openButton.Position = UDim2.new(0, 0, 0, 0)
-openButton.BackgroundColor3 = darkSkyColors.Success
-openButton.Text = "⚡"
-openButton.TextColor3 = Color3.new(1, 1, 1)
-openButton.Font = Enum.Font.GothamBold
-openButton.TextSize = 20
-openButton.AutoButtonColor = false
-openButton.Visible = false -- مخفي في البداية
-openButton.Parent = screenGui
-
-local openCorner = Instance.new("UICorner")
-openCorner.CornerRadius = UDim.new(0, 10)
-openCorner.Parent = openButton
-
-local openStroke = Instance.new("UIStroke")
-openStroke.Color = Color3.new(1, 1, 1)
-openStroke.Transparency = 0.8
-openStroke.Thickness = 1
-openStroke.Parent = openButton
-
--- English Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -50, 1, 0)
-title.Position = UDim2.new(0, 50, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "🌙 Dark Sky Controller LORLN "
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16
-title.TextColor3 = darkSkyColors.Text
-title.TextStrokeTransparency = 0.7
-title.TextStrokeColor3 = darkSkyColors.Accent
-title.Parent = titleBar
-
--- Close Button (على اليمين)
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0.5, -15)
-closeButton.BackgroundColor3 = darkSkyColors.Danger
-closeButton.Text = "X"
-closeButton.TextColor3 = Color3.new(1, 1, 1)
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 16
-closeButton.AutoButtonColor = false
-closeButton.Parent = titleBar
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(1, 0)
-closeCorner.Parent = closeButton
-
-local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.new(1, 1, 1)
-closeStroke.Transparency = 0.8
-closeStroke.Thickness = 1
-closeStroke.Parent = closeButton
-
--- Open/Close functionality
-local isUIVisible = true
-local lastMainFramePosition = mainFrame.Position
-
-openButton.MouseButton1Click:Connect(function()
-    isUIVisible = true
-    mainFrame.Visible = true
-    openButton.Visible = false
-    
-    -- Animation for opening
-    mainFrame.Position = lastMainFramePosition
-    mainFrame.Size = UDim2.new(0, 320, 0, 180)
-    
-    TweenService:Create(mainFrame, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 320, 0, 180)
-    }):Play()
-end)
-
-closeButton.MouseButton1Click:Connect(function()
-    isUIVisible = false
-    
-    -- حفظ الموضع الحالي
-    lastMainFramePosition = mainFrame.Position
-    
-    -- إظهار زر الفتح في نفس موقع الواجهة
-    openButton.Position = lastMainFramePosition
-    
-    -- إخفاء الواجهة مع تأثير
-    TweenService:Create(mainFrame, TweenInfo.new(0.2), {
-        Size = UDim2.new(0, 0, 0, 180)
-    }):Play()
-    
-    task.wait(0.2)
-    
-    mainFrame.Visible = false
-    openButton.Visible = true
-    
-    -- إرجاع الواجهة لحجمها الطبيعي
-    mainFrame.Size = UDim2.new(0, 320, 0, 180)
-end)
-
--- Code Input Section
-local codeInputFrame = Instance.new("Frame")
-codeInputFrame.Size = UDim2.new(1, -20, 0, 60)
-codeInputFrame.Position = UDim2.new(0, 10, 0, 45)
-codeInputFrame.BackgroundColor3 = darkSkyColors.Container
-codeInputFrame.Parent = mainFrame
-
-local codeCorner = Instance.new("UICorner")
-codeCorner.CornerRadius = UDim.new(0, 12)
-codeCorner.Parent = codeInputFrame
-
-local codeStroke = Instance.new("UIStroke")
-codeStroke.Color = Color3.fromRGB(50, 65, 85)
-codeStroke.Thickness = 1
-codeStroke.Parent = codeInputFrame
-
-local codeTextBox = Instance.new("TextBox")
-codeTextBox.Size = UDim2.new(0.65, -10, 0, 30)
-codeTextBox.Position = UDim2.new(0, 10, 0, 15)
-codeTextBox.BackgroundColor3 = Color3.fromRGB(40, 50, 65)
-codeTextBox.PlaceholderText = "Enter Animation ID..."
-codeTextBox.PlaceholderColor3 = Color3.fromRGB(150, 160, 175)
-codeTextBox.Text = ""
-codeTextBox.TextColor3 = darkSkyColors.Text
-codeTextBox.Font = Enum.Font.Gotham
-codeTextBox.TextSize = 14
-codeTextBox.ClearTextOnFocus = false
-codeTextBox.Parent = codeInputFrame
-
-local textBoxCorner = Instance.new("UICorner")
-textBoxCorner.CornerRadius = UDim.new(0, 8)
-textBoxCorner.Parent = codeTextBox
-
-local activateButton = Instance.new("TextButton")
-activateButton.Size = UDim2.new(0.35, -10, 0, 30)
-activateButton.Position = UDim2.new(0.65, 0, 0, 15)
-activateButton.BackgroundColor3 = darkSkyColors.Success
-activateButton.Text = "⚡ Activate"
-activateButton.TextColor3 = Color3.new(1, 1, 1)
-activateButton.Font = Enum.Font.GothamBold
-activateButton.TextSize = 14
-activateButton.AutoButtonColor = false
-activateButton.Parent = codeInputFrame
-
-local activateButtonCorner = Instance.new("UICorner")
-activateButtonCorner.CornerRadius = UDim.new(0, 8)
-activateButtonCorner.Parent = activateButton
-
-local activateButtonStroke = Instance.new("UIStroke")
-activateButtonStroke.Color = Color3.fromRGB(255, 255, 255)
-activateButtonStroke.Transparency = 0.8
-activateButtonStroke.Thickness = 1
-activateButtonStroke.Parent = activateButton
-
-activateButton.MouseButton1Click:Connect(function()
-    local code = codeTextBox.Text:gsub("%D", "") -- Remove non-digits
-    if code ~= "" and tonumber(code) then
-        local success, anim = pcall(function()
-            return game:GetObjects("rbxassetid://" .. code)[1]
-        end)
-        
-        if success and anim then
-            CurrentTrack = LoadTrack(tonumber(code))
-            activateButton.Text = "✅ Active!"
-            activateButton.BackgroundColor3 = darkSkyColors.Success
-            task.wait(1)
-            activateButton.Text = "⚡ Activate"
-        else
-            activateButton.Text = "❌ Error!"
-            activateButton.BackgroundColor3 = darkSkyColors.Danger
-            task.wait(1)
-            activateButton.Text = "⚡ Activate"
-            activateButton.BackgroundColor3 = darkSkyColors.Success
-        end
-    else
-        activateButton.Text = "⚠️ Numbers Only!"
-        activateButton.BackgroundColor3 = darkSkyColors.Warning
-        task.wait(1)
-        activateButton.Text = "⚡ Activate"
-        activateButton.BackgroundColor3 = darkSkyColors.Success
-    end
-end)
-
--- Settings Menu (Dropdown below)
-local settingsButton = Instance.new("TextButton")
-settingsButton.Size = UDim2.new(0.4, 0, 0, 30)
-settingsButton.Position = UDim2.new(0.3, 0, 0, 115)
-settingsButton.BackgroundColor3 = darkSkyColors.Warning
-settingsButton.Text = "⚙️ Settings"
-settingsButton.TextColor3 = Color3.new(1, 1, 1)
-settingsButton.Font = Enum.Font.GothamBold
-settingsButton.TextSize = 14
-settingsButton.AutoButtonColor = false
-settingsButton.Parent = mainFrame
-
-local settingsBtnCorner = Instance.new("UICorner")
-settingsBtnCorner.CornerRadius = UDim.new(0, 8)
-settingsBtnCorner.Parent = settingsButton
-
-local settingsBtnStroke = Instance.new("UIStroke")
-settingsBtnStroke.Color = Color3.fromRGB(255, 255, 255)
-settingsBtnStroke.Transparency = 0.8
-settingsBtnStroke.Thickness = 1
-settingsBtnStroke.Parent = settingsButton
-
--- Control Buttons Frame
-local controlFrame = Instance.new("Frame")
-controlFrame.Size = UDim2.new(1, -20, 0, 55)
-controlFrame.Position = UDim2.new(0, 10, 0, 150)
-controlFrame.BackgroundColor3 = darkSkyColors.Container
-controlFrame.Parent = mainFrame
-
-local controlCorner = Instance.new("UICorner")
-controlCorner.CornerRadius = UDim.new(0, 12)
-controlCorner.Parent = controlFrame
-
-local controlStroke = Instance.new("UIStroke")
-controlStroke.Color = Color3.fromRGB(50, 65, 85)
-controlStroke.Thickness = 1
-controlStroke.Parent = controlFrame
-
--- Control Buttons Grid inside the frame
-local controlGrid = Instance.new("UIGridLayout")
-controlGrid.CellPadding = UDim2.new(0, 8, 0, 5)
-controlGrid.CellSize = UDim2.new(0.5, -15, 0, 20)
-controlGrid.StartCorner = Enum.StartCorner.TopLeft
-controlGrid.Parent = controlFrame
-
--- Control Buttons inside the frame
-local buttonConfigs = {
-    {
-        Name = "Bundle",
-        Color = darkSkyColors.Success,
-        Icon = "📦",
-        Action = ActivateBundle
-    },
-    {
-        Name = "Emote",
-        Color = darkSkyColors.Purple,
-        Icon = "💃",
-        Action = ActivateEmote
-    },
-    {
-        Name = "Both",
-        Color = darkSkyColors.Accent,
-        Icon = "⚡",
-        Action = ActivateBoth
-    },
-    {
-        Name = "Stop",
-        Color = darkSkyColors.Danger,
-        Icon = "■",
-        Action = StopTrack
-    }
-}
-
-for i, config in ipairs(buttonConfigs) do
-    local btn = Instance.new("TextButton")
-    btn.BackgroundColor3 = config.Color
-    btn.Text = config.Icon .. " " .. config.Name
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 11
-    btn.TextWrapped = true
-    btn.AutoButtonColor = false
-    btn.Parent = controlFrame
-    
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
-    
-    local btnStroke = Instance.new("UIStroke")
-    btnStroke.Color = Color3.fromRGB(255, 255, 255)
-    btnStroke.Transparency = 0.8
-    btnStroke.Thickness = 1
-    btnStroke.Parent = btn
-    
-    -- Click animation
-    btn.MouseButton1Click:Connect(function()
-        config.Action()
-        
-        TweenService:Create(btn, TweenInfo.new(0.1), {
-            BackgroundTransparency = 0.3
-        }):Play()
-        
-        task.wait(0.2)
-        
-        TweenService:Create(btn, TweenInfo.new(0.1), {
-            BackgroundTransparency = 0
-        }):Play()
-    end)
-end
-
--- Settings Menu (Dropdown that appears below)
-local settingsMenu = Instance.new("Frame")
-settingsMenu.Size = UDim2.new(1, -20, 0, 250)
-settingsMenu.Position = UDim2.new(0, 10, 0, 210)
-settingsMenu.BackgroundColor3 = darkSkyColors.Container
-settingsMenu.Visible = false
-settingsMenu.Parent = mainFrame
-
-local menuCorner = Instance.new("UICorner")
-menuCorner.CornerRadius = UDim.new(0, 12)
-menuCorner.Parent = settingsMenu
-
-local menuStroke = Instance.new("UIStroke")
-menuStroke.Color = darkSkyColors.Warning
-menuStroke.Thickness = 2
-menuStroke.Transparency = 0.6
-menuStroke.Parent = settingsMenu
-
-local menuScroll = Instance.new("ScrollingFrame")
-menuScroll.Size = UDim2.new(1, -10, 1, -10)
-menuScroll.Position = UDim2.new(0, 5, 0, 5)
-menuScroll.BackgroundTransparency = 1
-menuScroll.CanvasSize = UDim2.new(0, 0, 2, 0)
-menuScroll.ScrollBarThickness = 6
-menuScroll.ScrollBarImageColor3 = darkSkyColors.Accent
-menuScroll.Parent = settingsMenu
-
--- Toggle settings menu
-local isSettingsOpen = false
-settingsButton.MouseButton1Click:Connect(function()
-    isSettingsOpen = not isSettingsOpen
-    settingsMenu.Visible = isSettingsOpen
-    
-    -- Adjust main frame size
-    if isSettingsOpen then
-        mainFrame.Size = UDim2.new(0, 320, 0, 465)
-        settingsButton.BackgroundColor3 = darkSkyColors.Accent
-    else
-        mainFrame.Size = UDim2.new(0, 320, 0, 180)
-        settingsButton.BackgroundColor3 = darkSkyColors.Warning
-    end
-    
-    TweenService:Create(settingsButton, TweenInfo.new(0.1), {
-        BackgroundTransparency = 0.3
-    }):Play()
-    
-    task.wait(0.2)
-    
-    TweenService:Create(settingsButton, TweenInfo.new(0.1), {
-        BackgroundTransparency = 0
-    }):Play()
-end)
-
--- Create settings controls
-local menuList = Instance.new("UIListLayout", menuScroll)
-menuList.Padding = UDim.new(0, 8)
-menuList.FillDirection = Enum.FillDirection.Vertical
-menuList.SortOrder = Enum.SortOrder.LayoutOrder
-
-menuList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    menuScroll.CanvasSize = UDim2.new(0, 0, 0, menuList.AbsoluteContentSize.Y + 10)
-end)
-
-local function createSlider(name, min, max, default)
-    Settings[name] = default or min
-
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 60)
-    container.BackgroundTransparency = 1
-    container.Parent = menuScroll
-
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = darkSkyColors.Secondary
-    bg.Parent = container
-    
-    local bgCorner = Instance.new("UICorner")
-    bgCorner.CornerRadius = UDim.new(0, 8)
-    bgCorner.Parent = bg
-    
-    local bgStroke = Instance.new("UIStroke")
-    bgStroke.Color = Color3.fromRGB(50, 65, 85)
-    bgStroke.Thickness = 1
-    bgStroke.Parent = bg
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 0, 20)
-    label.Position = UDim2.new(0, 10, 0, 5)
-    label.BackgroundTransparency = 1
-    label.Text = string.format("%s: %.2f", name, Settings[name])
-    label.TextColor3 = darkSkyColors.Text
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = bg
-
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, -40, 0, 10)
-    sliderBar.Position = UDim2.new(0, 20, 0, 35)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(60, 75, 95)
-    sliderBar.Parent = bg
-    
-    local barCorner = Instance.new("UICorner")
-    barCorner.CornerRadius = UDim.new(0, 5)
-    barCorner.Parent = sliderBar
-
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new(0, 0, 1, 0)
-    
-    if name == "Speed" then
-        sliderFill.BackgroundColor3 = darkSkyColors.Cyan
-    elseif name == "Weight" then
-        sliderFill.BackgroundColor3 = darkSkyColors.Purple
-    elseif name == "Fade In" then
-        sliderFill.BackgroundColor3 = darkSkyColors.Warning
-    elseif name == "Fade Out" then
-        sliderFill.BackgroundColor3 = darkSkyColors.Danger
-    else
-        sliderFill.BackgroundColor3 = darkSkyColors.Accent
-    end
-    
-    sliderFill.Parent = sliderBar
-    
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 5)
-    fillCorner.Parent = sliderFill
-
-    local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 16, 0, 16)
-    thumb.AnchorPoint = Vector2.new(0.5, 0.5)
-    thumb.Position = UDim2.new(0, 0, 0.5, 0)
-    thumb.BackgroundColor3 = darkSkyColors.Text
-    thumb.Parent = sliderBar
-    
-    local thumbCorner = Instance.new("UICorner")
-    thumbCorner.CornerRadius = UDim.new(1, 0)
-    thumbCorner.Parent = thumb
-
-    local function tweenVisual(rel)
-        local visualRel = math.clamp(rel, 0, 1)
-        TweenService:Create(sliderFill, TweenInfo.new(0.15), {Size = UDim2.new(visualRel, 0, 1, 0)}):Play()
-        TweenService:Create(thumb, TweenInfo.new(0.15), {Position = UDim2.new(visualRel, 0, 0.5, 0)}):Play()
-    end
-
-    local function applyValue(value)
-        Settings[name] = value
-        label.Text = string.format("%s: %.2f", name, value)
-        
-        local visualValue = math.clamp(value, min, max)
-        local rel = (visualValue - min) / (max - min)
-        tweenVisual(rel)
-
-        if CurrentTrack and CurrentTrack.IsPlaying then
-            if name == "Speed" then
-                CurrentTrack:AdjustSpeed(Settings["Speed"])
-            elseif name == "Weight" then
-                local weight = Settings["Weight"]
-                if weight == 0 then weight = 0.001 end
-                CurrentTrack:AdjustWeight(weight)
-            elseif name == "Time Position" then
-                if CurrentTrack and CurrentTrack.IsPlaying and CurrentTrack.Length > 0 then
-                    CurrentTrack.TimePosition = math.clamp(value, 0, 1) * CurrentTrack.Length
-                end
-            end
-        end
-    end
-   
-    local dragging = false
-    local function updateFromInput(input)
-        local relX = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-        local value = math.floor((min + (max - min) * relX) * 100) / 100
-        applyValue(value)
-    end
-
-    sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            updateFromInput(input)
-        end
-    end)
-    thumb.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            updateFromInput(input)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateFromInput(input)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-            dragging = false
-        end
-    end)
-
-    applyValue(Settings[name])
-end
-
-local function createToggle(name)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 40)
-    container.BackgroundTransparency = 1
-    container.Parent = menuScroll
-
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = darkSkyColors.Secondary
-    bg.Parent = container
-    
-    local bgCorner = Instance.new("UICorner")
-    bgCorner.CornerRadius = UDim.new(0, 8)
-    bgCorner.Parent = bg
-    
-    local bgStroke = Instance.new("UIStroke")
-    bgStroke.Color = Color3.fromRGB(50, 65, 85)
-    bgStroke.Thickness = 1
-    bgStroke.Parent = bg
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.7, -10, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = darkSkyColors.Text
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = bg
-
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 50, 0, 22)
-    toggleBtn.Position = UDim2.new(1, -60, 0.5, -11)
-    toggleBtn.BackgroundColor3 = Settings[name] and darkSkyColors.Success or darkSkyColors.Danger
-    toggleBtn.Text = Settings[name] and "ON" or "OFF"
-    toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.TextSize = 12
-    toggleBtn.AutoButtonColor = false
-    toggleBtn.Parent = bg
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(1, 0)
-    toggleCorner.Parent = toggleBtn
-    
-    local toggleStroke = Instance.new("UIStroke")
-    toggleStroke.Color = Color3.fromRGB(255, 255, 255)
-    toggleStroke.Transparency = 0.8
-    toggleStroke.Thickness = 1
-    toggleStroke.Parent = toggleBtn
-
-    toggleBtn.MouseButton1Click:Connect(function()
-        Settings[name] = not Settings[name]
-        if Settings[name] then
-            toggleBtn.Text = "ON"
-            toggleBtn.BackgroundColor3 = darkSkyColors.Success
-        else
-            toggleBtn.Text = "OFF"
-            toggleBtn.BackgroundColor3 = darkSkyColors.Danger
-        end
-    end)
-    
-    -- Update button appearance based on current setting
-    if name == "Stop On Move" then
-        toggleBtn.Text = Settings[name] and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = Settings[name] and darkSkyColors.Success or darkSkyColors.Danger
-    end
-    
-    return toggleBtn
-end
-
--- Create settings controls in menu
-local stopOnMoveToggle = createToggle("Stop On Move")
-createToggle("Use Bundle")
-createToggle("Allow Invisible")
-createSlider("Time Position", 0, 1, Settings["Time Position"])
-createSlider("Speed", 0, 5, Settings["Speed"])
-createSlider("Weight", 0, 1, Settings["Weight"])
-createSlider("Fade In", 0, 2, Settings["Fade In"])
-createSlider("Fade Out", 0, 2, Settings["Fade Out"])
-
--- Movement detection
-RunService.RenderStepped:Connect(function()
-    if character.PrimaryPart then
-        if Settings["Stop On Move"] and CurrentTrack and CurrentTrack.IsPlaying then
-            local moved = (character.PrimaryPart.Position - lastPosition).Magnitude > 0.1
-            local jumped = humanoid and humanoid:GetState() == Enum.HumanoidStateType.Jumping
-            
-            if moved or jumped then
-                CurrentTrack:Stop(Settings["Fade Out"])
-                CurrentTrack = nil
-                
-                if Settings["Use Bundle"] then
-                    sendHDAdminCommand(";re")
-                end
-            end
-        end
-        lastPosition = character.PrimaryPart.Position
-    end
-end)
-
--- Invisible character functionality
-local originalCollisionStates = {}
-local lastFixClipState = Settings["Allow Invisible"]
-
-local function saveCollisionStates()
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") and part ~= character:FindFirstChild("HumanoidRootPart") then
-            originalCollisionStates[part] = part.CanCollide
-        end
-    end
-end
-
-local function disableCollisionsExceptRootPart()
-    if not Settings["Allow Invisible"] then
-        return
-    end
-    
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") and part ~= character:FindFirstChild("HumanoidRootPart") then
-            part.CanCollide = false
-        end
-    end
-end
-
-local function restoreCollisionStates()
-    for part, canCollide in pairs(originalCollisionStates) do
-        if part and part.Parent then
-            part.CanCollide = canCollide
-        end
-    end
-    originalCollisionStates = {}
-end
-
-saveCollisionStates()
-
-RunService.Stepped:Connect(function()
-    if character and character.Parent then
-        local currentFixClip = Settings["Allow Invisible"]
-        
-        if lastFixClipState ~= currentFixClip then
-            if currentFixClip then
-                saveCollisionStates()
-                disableCollisionsExceptRootPart()
-            else
-                restoreCollisionStates()
-            end
-            lastFixClipState = currentFixClip
-        elseif currentFixClip then
-            disableCollisionsExceptRootPart()
-        end
-    else
-        restoreCollisionStates()
-    end
-end)
-
-player.CharacterAdded:Connect(function(newCharacter)
-    restoreCollisionStates()
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-    
-    saveCollisionStates()
-    lastFixClipState = Settings["Allow Invisible"]
-end)
-
--- Quick keys
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.B then
-        ActivateBundle()
-    elseif input.KeyCode == Enum.KeyCode.E then
-        ActivateEmote()
-    elseif input.KeyCode == Enum.KeyCode.A then
-        ActivateBoth()
-    elseif input.KeyCode == Enum.KeyCode.S then
-        StopTrack()
-    elseif input.KeyCode == Enum.KeyCode.H then
-        closeButton:Click()
-    elseif input.KeyCode == Enum.KeyCode.P then
-        settingsButton:Click()
-    elseif input.KeyCode == Enum.KeyCode.O then
-        openButton:Click()
-    end
-end)
-
-
--- الخدمات
+--==============================
+-- Services
+--==============================
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local player = Players.LocalPlayer
 
--- ريموت HDAdmin
-local HDAdmin = ReplicatedStorage:WaitForChild("HDAdminHDClient")
-local Signals = HDAdmin:WaitForChild("Signals")
-local RequestCommandModification = Signals:WaitForChild("RequestCommandModification")
+--==============================
+-- Settings
+--==============================
+local TEXT = "LORLN ON TOPP EZ"
+local SPEED = 0.05 -- كل ما قل = أسرع (خطر)
+local ENABLED = true
 
-
--- إنشاء ScreenGui
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HDAdminGUI"
-ScreenGui.ResetOnSpawn = false -- <<< هذا السطر المهم
-ScreenGui.Parent = PlayerGui
-
--- إنشاء Frame للواجهة
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 180, 0, 70) -- زيادة الحجم لإضافة زر السحب
-Frame.Position = UDim2.new(0.5, -90, 0.5, -35)
-Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Frame.BorderSizePixel = 0
-Frame.Parent = ScreenGui
-
--- إضافة الزوايا المستديرة
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = Frame
-
--- شريط السحب العلوي
-local DragBar = Instance.new("Frame")
-DragBar.Size = UDim2.new(1, 0, 0, 20)
-DragBar.Position = UDim2.new(0, 0, 0, 0)
-DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-DragBar.BorderSizePixel = 0
-DragBar.Parent = Frame
-
--- زوايا مستديرة للشريط العلوي فقط
-local DragBarCorner = Instance.new("UICorner")
-DragBarCorner.CornerRadius = UDim.new(0, 10)
-DragBarCorner.Parent = DragBar
-
--- نص السحب
-local DragText = Instance.new("TextLabel")
-DragText.Size = UDim2.new(1, 0, 1, 0)
-DragText.Position = UDim2.new(0, 0, 0, 0)
-DragText.BackgroundTransparency = 1
-DragText.TextColor3 = Color3.new(1, 1, 1)
-DragText.Font = Enum.Font.SourceSansBold
-DragText.TextSize = 12
-DragText.Text = "تخريب الماب:ez"
-DragText.Parent = DragBar
-
--- زر On/Off
-local Button = Instance.new("TextButton")
-Button.Size = UDim2.new(1, -20, 0, 40) -- تصغير قليلاً لإضافة مساحة
-Button.Position = UDim2.new(0, 10, 0, 25)
-Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-Button.TextColor3 = Color3.new(1, 1, 1)
-Button.Font = Enum.Font.SourceSansBold
-Button.TextSize = 18
-Button.Text = "OFF"
-Button.Parent = Frame
-
--- زوايا مستديرة للزر
-local ButtonCorner = Instance.new("UICorner")
-ButtonCorner.CornerRadius = UDim.new(0, 8)
-ButtonCorner.Parent = Button
-
--- الأوامر
-local commandBundle = ";bundle me 28334386015043"
-local commandUnchar = ";unchar"
-
--- حالة الزر
-local isOn = false
-
--- وظيفة الضغط على الزر
-Button.MouseButton1Click:Connect(function()
-    isOn = not isOn
-    if isOn then
-        Button.Text = "تشغيل"
-        Button.BackgroundColor3 = Color3.fromRGB(0, 220, 0) -- أخضر عند التشغيل
-        RequestCommandModification:InvokeServer(commandBundle)
-    else
-        Button.Text = "ايقاف"
-        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- أزرق عند الإيقاف
-        RequestCommandModification:InvokeServer(commandUnchar)
-    end
-end)
-
--- === نظام السحب ===
-local dragging = false
-local dragInput, startPos, startInputPos
-
-local function update(input)
-    local delta = input.Position - startInputPos
-    Frame.Position = UDim2.new(
-        startPos.X.Scale,
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale,
-        startPos.Y.Offset + delta.Y
-    )
+--==============================
+-- 🔴 تخريب GUI
+--==============================
+local function corruptGUI(obj)
+	if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+		obj.Text = TEXT
+		obj.TextScaled = true
+		obj.Font = Enum.Font.Arcade
+		obj.TextColor3 = Color3.fromRGB(math.random(0,255),math.random(0,255),math.random(0,255))
+		obj.BackgroundColor3 = Color3.fromRGB(math.random(0,255),math.random(0,255),math.random(0,255))
+		obj.Rotation = math.random(-180,180)
+	end
 end
 
--- السماح بالسحب من الشريط العلوي فقط
-DragBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        startInputPos = input.Position
-        startPos = Frame.Position
+for _,g in ipairs(player.PlayerGui:GetDescendants()) do
+	corruptGUI(g)
+end
 
-        -- تغيير لون شريط السحب عند البدء
-        DragBar.BackgroundColor3 = Color3.fromRGB(0, 150, 250)
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-                -- إعادة لون شريط السحب
-                DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-            end
-        end)
-    end
+player.PlayerGui.DescendantAdded:Connect(function(g)
+	task.wait()
+	corruptGUI(g)
 end)
 
-DragBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+--==============================
+-- 🧠 دبل GUI
+--==============================
+local function dupeGUI()
+	for _, gui in ipairs(player.PlayerGui:GetDescendants()) do
+		if gui:IsA("GuiObject") then
+			pcall(function()
+				local c = gui:Clone()
+				c.Parent = gui.Parent
+				c.Position = gui.Position + UDim2.new(0,math.random(-30,30),0,math.random(-30,30))
+				corruptGUI(c)
+			end)
+		end
+	end
+end
+
+--==============================
+-- 🧱 تخريب + دبل الماب
+--==============================
+local function dupeMap()
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			pcall(function()
+				-- تخريب
+				obj.Color = Color3.fromRGB(math.random(0,255),math.random(0,255),math.random(0,255))
+				obj.Material = Enum.Material.Neon
+				obj.Orientation = Vector3.new(math.random(0,360),math.random(0,360),math.random(0,360))
+
+				-- دبل
+				local c = obj:Clone()
+				c.Parent = obj.Parent
+				c.CFrame = obj.CFrame * CFrame.new(
+					math.random(-6,6),
+					math.random(-6,6),
+					math.random(-6,6)
+				)
+			end)
+		elseif obj:IsA("Decal") or obj:IsA("Texture") then
+			obj:Destroy()
+		end
+	end
+end
+
+--==============================
+-- 📢 Billboard سبام
+--==============================
+for _, plr in ipairs(Players:GetPlayers()) do
+	if plr.Character and plr.Character:FindFirstChild("Head") then
+		local bill = Instance.new("BillboardGui")
+		bill.Size = UDim2.new(0,300,0,100)
+		bill.AlwaysOnTop = true
+		bill.Parent = plr.Character.Head
+
+		local txt = Instance.new("TextLabel", bill)
+		txt.Size = UDim2.new(1,0,1,0)
+		txt.BackgroundTransparency = 1
+		txt.Text = TEXT
+		txt.TextScaled = true
+		txt.Font = Enum.Font.Arcade
+		txt.TextColor3 = Color3.fromRGB(255,0,0)
+	end
+end
+
+--==============================
+-- 😈 Loop التخريب + الدبل
+--==============================
+task.spawn(function()
+	while ENABLED do
+		dupeGUI()
+		dupeMap()
+		task.wait(SPEED)
+	end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
+--==============================
+-- 📺 اهتزاز الشاشة
+--==============================
+RunService.RenderStepped:Connect(function()
+	if ENABLED and workspace.CurrentCamera then
+		workspace.CurrentCamera.CFrame *= CFrame.Angles(
+			math.rad(math.random(-2,2)),
+			math.rad(math.random(-2,2)),
+			0
+		)
+	end
 end)
 
--- إضافة تأثير عند التمرير فوق الشريط
-DragBar.MouseEnter:Connect(function()
-    if not dragging then
-        DragBar.BackgroundColor3 = Color3.fromRGB(0, 140, 220)
-    end
+--==============================
+-- ⛔ زر إيقاف (L)
+--==============================
+UserInputService.InputBegan:Connect(function(i,gp)
+	if gp then return end
+	if i.KeyCode == Enum.KeyCode.L then
+		ENABLED = false
+		warn("🔥 CHAOS STOPPED")
+	end
 end)
-
-DragBar.MouseLeave:Connect(function()
-    if not dragging then
-        DragBar.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-    end
-end)
-
--- إضافة تأثيرات للزر الرئيسي
-Button.MouseEnter:Connect(function()
-    if not isOn then
-        Button.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-    else
-        Button.BackgroundColor3 = Color3.fromRGB(0, 230, 20)
-    end
-end)
-
-Button.MouseLeave:Connect(function()
-    if not isOn then
-        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    else
-        Button.BackgroundColor3 = Color3.fromRGB(0, 220, 0)
-    end
-end)
-
-print("✅ HDAdmin GUI Loaded!")
-print("📌 Use the top bar to drag the interface")
-print("🔧 Drag feature added successfully!")
