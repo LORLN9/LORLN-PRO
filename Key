@@ -1,1 +1,4 @@
-KEY_LDDIHWGEUXUSCW1037291
+local HttpService = game:GetService("HttpService")
+local key = HttpService:GetAsync("https://<your-project>.deno.dev")
+
+print("KEY:", key)
