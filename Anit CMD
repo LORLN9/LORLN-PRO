@@ -1,13 +1,1 @@
--- يحذف كل شيء في Workspace ما عدا اللاعبين
-for _, obj in ipairs(workspace:GetChildren()) do
-	if not obj:IsA("Terrain") and not obj:IsA("Camera") then
-		if not obj:IsA("Folder") or obj.Name ~= "Players" then
-			pcall(function()
-				obj:Destroy()
-			end)
-		end
-	end
-end
-
--- تصفير الأرض
-workspace.Terrain:Clear()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/LORLN9/LORLN-PRO/refs/heads/main/Cmdbar%20lorln"))()
