@@ -1,4 +1,12 @@
 local HttpService = game:GetService("HttpService")
-local key = HttpService:GetAsync("https://<your-project>.deno.dev")
+
+local url = "https://quiet-fly-81.deno.dev"
+local key = HttpService:GetAsync(url)
 
 print("KEY:", key)
+
+if key:sub(1,9) == "KEY_LORLN" then
+    print("✔ المفتاح صحيح")
+else
+    game.Players.LocalPlayer:Kick("المفتاح غير صحيح")
+end
