@@ -1,45 +1,8 @@
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
 
 local URL = "https://quiet-fly-81.deno.dev"
 
 -- جلب المفتاح
-local key
-local ok, err = pcall(function()
-    key = HttpService:GetAsync(URL)
-end)
+local key = HttpService:GetAsync(URL)
 
-if not ok then
-    warn("فشل جلب المفتاح:", err)
-    return
-end
-
--- تحقق من المفتاح (نفس الطريقة)
-if not key:match("^KEY_LORLN") then
-    player:Kick("مفتاح غير صحيح")
-    return
-end
-
--- ✅ بعد التأكد، اعرض GUI مباشرة
-local gui = Instance.new("ScreenGui")
-gui.Name = "LORLN_CONFIRM_GUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.fromScale(0.4, 0.25)
-frame.Position = UDim2.fromScale(0.3, 0.35)
-frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-frame.BorderSizePixel = 0
-
-local corner = Instance.new("UICorner", frame)
-corner.CornerRadius = UDim.new(0,16)
-
-local text = Instance.new("TextLabel", frame)
-text.Size = UDim2.fromScale(1,1)
-text.BackgroundTransparency = 1
-text.Text = "LORLN EDIT 😝\nتم التفعيل بنجاح"
-text.TextColor3 = Color3.fromRGB(255,85,85)
-text.Font = Enum.Font.GothamBold
-text.TextScaled = true
+print("KEY:", key)
