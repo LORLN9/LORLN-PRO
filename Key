@@ -1,11 +1,20 @@
 local HttpService = game:GetService("HttpService")
 
 local BASE = "https://cloudy-dove-90.lorln9.deno.net"
+local PREFIX = "KEY_LORLN"
 
+-- 1) جلب المفتاح من الموقع
 local key = HttpService:GetAsync(BASE .. "/")
 print("KEY:", key)
 
-local scriptText = HttpService:GetAsync(BASE .. "/script")
-print("SCRIPT LENGTH:", #scriptText)
+-- 2) تحقق المفتاح
+if typeof(key) ~= "string" or not key:find(PREFIX) then
+    game.Players.LocalPlayer:Kick("Invalid Key")
+    return
+end
 
+-- 3) جلب السكربت
+local scriptText = HttpService:GetAsync(BASE .. "/script")
+
+-- 4) تفعيل السكربت
 loadstring(scriptText)()
